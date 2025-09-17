@@ -1,5 +1,6 @@
 # Synap-Boot
-Academic project on software engineering.
+
+Synapboot es un chatbot de asistencia diseñado para orientar a los usuarios en la consulta de medicamentos y condiciones médicas. Su objetivo principal es facilitar el acceso a información clara y confiable, ayudando al usuario a comparar opciones, resolver dudas y seleccionar la alternativa más adecuada para su situación particular..
 
 ## Team
 - Juan Camilo López Leon (@jcleon07)
