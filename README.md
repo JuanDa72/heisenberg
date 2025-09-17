@@ -6,5 +6,6 @@ Academic project on software engineering.
 - Alejandro Ramirez Núñez (@Alejo71)
 - Juan Sebastian Gamez Ariza (@sebastiangamez)
 - Juan David Cruz Giraldo (@JuanDa72)
-![Logo](C:\Users\Biblio\Downloads)
+
+<img width="549" height="476" alt="Logo" src="https://github.com/user-attachments/assets/df4e0415-1c98-42c8-b92a-6caafd1efbed" />
 
