@@ -1,0 +1,46 @@
+# ──────────────────────────────
+# Logs y backups
+# ──────────────────────────────
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*.old
+
+# ──────────────────────────────
+# Entornos virtuales / dependencias
+# ──────────────────────────────
+node_modules/
+venv/
+.env
+.env.*
+__pycache__/
+
+
+# ──────────────────────────────
+# IDEs y editores
+# ──────────────────────────────
+
+# VS Code
+.vscode/
+.history/
+
+# JetBrains (IntelliJ, PyCharm, WebStorm, etc.)
+.idea/
+*.iml
+out/
+
+
+# ──────────────────────────────
+# Otros
+# ──────────────────────────────
+.coverage
+.cache/
+.mypy_cache/
+pytest_cache/
+*.tgz
+*.tar.gz
+*.zip
+*.7z
+*.rar
