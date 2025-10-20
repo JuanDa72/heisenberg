@@ -1,0 +1,34 @@
+{
+  "name": "heisenberg-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./dist/cmd/api/main.js",
+  "scripts": {
+    "dev": "tsnd --respawn --clear src/server.ts",
+    "build": "rimraf ./dist && tsc",
+    "start": "node dist/cmd/api/main.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JuanDa72/heisenberg.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JuanDa72/heisenberg/issues"
+  },
+  "homepage": "https://github.com/JuanDa72/heisenberg#readme",
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/sequelize": "^4.28.20",
+    "rimraf": "^6.0.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "express": "^5.1.0",
+    "mysql2": "^3.6.5",
+    "sequelize": "^6.37.7"
+  }
+}
