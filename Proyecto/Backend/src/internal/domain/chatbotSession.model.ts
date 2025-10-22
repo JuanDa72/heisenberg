@@ -1,8 +1,8 @@
 import { DataTypes } from 'sequelize';
-import { sequelize } from '../config/database';
+import sequalize from '../config/database';
 import User from './user.model';
 
-const ChatbotSession = sequelize.define('ChatbotSession', {
+const ChatbotSession = sequalize.define('ChatbotSession', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -34,5 +34,7 @@ const ChatbotSession = sequelize.define('ChatbotSession', {
 // Define associations
 ChatbotSession.belongsTo(User, { foreignKey: 'user_id' });
 User.hasMany(ChatbotSession, { foreignKey: 'user_id' });
+
+ChatbotSession.sync();
 
 export default ChatbotSession;

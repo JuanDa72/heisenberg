@@ -1,7 +1,7 @@
 import { DataTypes } from 'sequelize';
-import { sequelize } from '../config/database';
+import sequalize from '../config/database';
 
-const Product = sequelize.define('Product', {
+const Product = sequalize.define('Product', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -10,6 +10,7 @@ const Product = sequelize.define('Product', {
   name: {
     type: DataTypes.STRING,
     allowNull: false,
+    unique: true,
   },
   type: {
     type: DataTypes.STRING,
@@ -34,10 +35,16 @@ const Product = sequelize.define('Product', {
   price: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
+    validate: {
+      min: 0,
+    },
   },
   stock: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    validate: {
+      min: 0,
+    },
   },
   created_at: {
     type: DataTypes.DATE,
@@ -48,5 +55,7 @@ const Product = sequelize.define('Product', {
   tableName: 'product',
   timestamps: false,
 });
+
+Product.sync();
 
 export default Product;

@@ -1,7 +1,8 @@
 import { DataTypes } from 'sequelize';
-import { sequelize } from '../config/database';
+import sequelize from '../config/database';
 
-const User = sequelize.define('User', {
+
+const UserModel = sequelize.define('User', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -29,8 +30,10 @@ const User = sequelize.define('User', {
     defaultValue: DataTypes.NOW,
   },
 }, {
-  tableName: 'user',
-  timestamps: false,
+    tableName: 'user',
+    timestamps: false,
 });
 
-export default User;
+UserModel.sync();
+
+export default UserModel;
