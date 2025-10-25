@@ -6,7 +6,9 @@
   "scripts": {
     "start": "tsc; node ./dist/cmd/api/main.js",
     "dev": "concurrently \"npx tsc --watch\" \"nodemon ./dist/cmd/api/main.js\" ",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+
   },
   "repository": {
     "type": "git",
@@ -22,8 +24,9 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/morgan": "^1.9.10",
-    "@types/sequelize": "^4.28.20",
     "@types/node": "^24.9.1",
+    "@types/sequelize": "^4.28.20",
+    "concurrently": "^9.2.1",
     "typescript": "^5.9.3"
   },
   "dependencies": {
