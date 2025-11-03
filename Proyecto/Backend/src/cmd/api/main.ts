@@ -1,4 +1,5 @@
 import { config } from 'dotenv';
+import {sequelize} from '../../internal/config/database';
 
 // Set environment variables
 config();
@@ -28,8 +29,17 @@ const handler = createHandler(service);
 app.use('/products', handler.productHandler.getRouter());
 
 // Start server
-app.listen(process.env.PORT || 3000, () => {
-    
-    console.log(`Server running on port ${process.env.PORT || 3000}`);
+async function main():Promise<void>{
+    try {
+        await sequelize.sync({ alter: true});
+        app.listen(process.env.PORT || 3000, () => {
+        console.log(`Server running on port ${process.env.PORT || 3000}`);
+        });
 
-});
+    }
+    catch (error) {
+        console.error('Unable to connect to the database:', error);
+    }
+
+}
+
