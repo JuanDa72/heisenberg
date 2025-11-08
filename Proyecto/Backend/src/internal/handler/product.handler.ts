@@ -19,6 +19,7 @@ export class ProductHandler implements ProductHandlerInterface {
   }
 
   public setupRoutes(): void {
+    this.router.get('/search/', this.getProductsByName.bind(this));
     this.router.get('/', this.getAllProducts.bind(this));
     this.router.get('/:id', this.getProductById.bind(this));
     this.router.post('/', this.createProduct.bind(this));
@@ -269,7 +270,65 @@ export class ProductHandler implements ProductHandlerInterface {
       };
       res.status(500).json(response);
     }
+  }  
+
+
+  // GET /products/:name - Get a product by name
+  
+  private async getProductsByName(req: Request, res: Response): Promise<void> {
+
+    let response: ResponseDTO<ProductDTO[]>;
+    try {
+
+       const name = req.query.name as string;
+      
+
+      //validate name
+      if (!name || name.trim() === '') {
+        response = {
+          status: 400,
+          message: 'Invalid name. Must be a non-empty string',
+        };
+        res.status(400).json(response);
+        return;
+      }
+
+      const results= await this.productService.findByNameLike(name);
+
+      response = {
+        status: 200,
+        message: `Products found: ${results.length}`,
+        data: results,
+      };
+      res.status(200).json(response);
+    }
+
+    catch (error) {
+
+      const consoleMessage = error instanceof Error ? error.message : 'Unknown error';
+      //If error is "not found", return 404
+      if (consoleMessage.includes('not found')) {
+        response = {
+          status: 404,
+          message: consoleMessage,
+        };
+        res.status(404).json(response);
+        return;
+      }
+
+      response = {
+        status: 500,
+        message: `Error getting products: ${consoleMessage}`,
+      };
+      res.status(500).json(response);
+      
+
+
+    }
+
   }
+  
+
 
   // Get router (encapsulation)
   public getRouter(): Router {

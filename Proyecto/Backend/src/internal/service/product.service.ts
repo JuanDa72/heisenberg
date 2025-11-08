@@ -7,6 +7,7 @@ export interface ProductServiceInterface {
   createProduct(productData: CreateProductDTO): Promise<ProductDTO>;
   updateProduct(id: number, productData: UpdateProductDTO): Promise<ProductDTO>;
   deleteProduct(id: number): Promise<boolean>;
+  findByNameLike(name: string): Promise<ProductDTO[]>;
 }
 
 export class ProductService implements ProductServiceInterface {
@@ -83,4 +84,20 @@ export class ProductService implements ProductServiceInterface {
     }
   }
 
+
+  async findByNameLike(name: string): Promise<ProductDTO[]> {
+
+    try {
+      const results = await this.productRepository.findByNameLike(name);
+      if (results.length === 0) {
+        throw new Error(`Product with name "${name}" not found`);
+      }
+      return results;
+    } catch (error) {
+      console.error('Error findByNameLike:', error);
+      throw error;
+    }
+  }
+
+  
 }

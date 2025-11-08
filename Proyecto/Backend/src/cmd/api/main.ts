@@ -27,6 +27,7 @@ const handler = createHandler(service);
 
 // Setup routes
 app.use('/products', handler.productHandler.getRouter());
+app.use('/users', handler.userHandler.getRouter());
 
 // Start server
 async function main():Promise<void>{
@@ -42,4 +43,6 @@ async function main():Promise<void>{
     }
 
 }
+
+main();
 
