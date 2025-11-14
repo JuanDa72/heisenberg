@@ -27,20 +27,14 @@
     "@types/express": "^5.0.3",
     "@types/jest": "^30.0.0",
     "@types/morgan": "^1.9.10",
-<<<<<<< HEAD
     "@types/node": "^24.10.0",
-    "@types/sequelize": "^4.28.20",
-    "concurrently": "^9.2.1",
-    "nodemon": "^3.1.10",
-=======
-    "@types/node": "^24.9.1",
     "@types/sequelize": "^4.28.20",
     "@types/supertest": "^6.0.3",
     "concurrently": "^9.2.1",
     "jest": "^30.2.0",
+    "nodemon": "^3.1.10",
     "supertest": "^7.1.4",
     "ts-jest": "^29.4.5",
->>>>>>> 9f7887e7868768da85ed28acaf9b7b935cad417c
     "typescript": "^5.9.3"
   },
   "dependencies": {
