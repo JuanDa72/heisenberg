@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+
+    --card: 220 40% 15%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 220 40% 15%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 221 83% 53%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 220 30% 20%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 220 30% 25%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 280 100% 56%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 30% 25%;
+    --input: 220 30% 18%;
+    --ring: 221 83% 53%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 225 40% 8%;
+    --sidebar-foreground: 210 40% 90%;
+    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 220 30% 15%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 220 30% 18%;
+    --sidebar-ring: 221 83% 53%;
+
+    --gradient-hero: linear-gradient(135deg, hsl(222 47% 11%) 0%, hsl(221 50% 20%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(220 40% 16%) 0%, hsl(220 40% 13%) 100%);
+    --shadow-glow: 0 0 40px hsla(221, 83%, 53%, 0.15);
+    --shadow-card: 0 4px 20px hsla(220, 40%, 8%, 0.4);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .gradient-card {
+    background: var(--gradient-card);
+  }
+
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+}
