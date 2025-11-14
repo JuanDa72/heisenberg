@@ -45,3 +45,26 @@ pytest_cache/
 *.zip
 *.7z
 *.rar
+
+# Dependencias
+node_modules/
+
+# Coverage de tests
+coverage/
+*.lcov
+
+# Archivos de compilación
+dist/
+build/
+
+# Variables de entorno
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
