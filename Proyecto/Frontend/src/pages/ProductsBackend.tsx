@@ -49,7 +49,7 @@ const ProductsBackend = () => {
   });
 
   useEffect(() => {
-    checkAuth();
+    // checkAuth(); // Comentado temporalmente para ver productos sin login
     loadProducts();
   }, []);
 
