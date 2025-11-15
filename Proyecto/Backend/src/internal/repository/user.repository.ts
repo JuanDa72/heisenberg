@@ -1,9 +1,10 @@
 import User from "../domain/user.model";
-import UserDTO, { CreateUserDTO, UpdateUserDTO, ServiceUserDTO } from "../dto/user.dto";
+import UserDTO, { CreateUserDTO, UpdateUserDTO, ServiceUserDTO, VerificationTokenDTO } from "../dto/user.dto";
 import { Op, UniqueConstraintError, ValidationError } from "sequelize";
 
 export interface UserRepositoryInterface {
     findById(id: number): Promise<UserDTO|null>;
+    fullFindById(id: number): Promise<VerificationTokenDTO | null>;
     findAll(limit?: number, offset?: number): Promise<UserDTO[]>;
     create(ServiceUserDTO: ServiceUserDTO): Promise<UserDTO>;
     update(id: number, userData: UpdateUserDTO): Promise<UserDTO|null>;
@@ -11,6 +12,8 @@ export interface UserRepositoryInterface {
     existsById(id: number): Promise<boolean>;
     findByEmail(email: string): Promise<UserDTO|null>;
     findByEmailForLogin(email: string): Promise<ServiceUserDTO | null>;
+    findByVerificationToken(token: string): Promise<VerificationTokenDTO | null>;
+    updatePassword(id: number, hash_password: string): Promise<void>;
 }    
 
 export class UserRepository{
@@ -31,6 +34,25 @@ export class UserRepository{
 
         catch (error){
             console.error('Error findById:', error);
+            throw error;
+        }
+    }
+
+    async fullFindById(id: number): Promise<VerificationTokenDTO | null> {
+
+        try {
+            const user=await User.findByPk(id);
+
+            if(!user){
+                return null;
+            }
+
+            const plain = user?.get({plain:true});
+            return plain as VerificationTokenDTO;
+        }
+
+        catch (error){
+            console.error('Error fullFindById:', error);
             throw error;
         }
     }
@@ -120,6 +142,25 @@ export class UserRepository{
 
     }
 
+    
+    async updatePassword(id: number, hash_password: string): Promise<void> {
+
+        try {
+            const user=await User.findByPk(id);
+            if(!user){
+                throw new Error(`User with ID ${id} not found`);
+            }
+
+            await user.update({hash_password} as any);
+        }
+
+        catch (error) {
+            console.error('Error updatePassword:', error);
+            throw new Error('Error updating user password in database');
+        }
+
+    }
+
 
     async delete(id: number): Promise<boolean> {
 
@@ -196,5 +237,22 @@ export class UserRepository{
 
     }
 
+    async findByVerificationToken(token: string): Promise<VerificationTokenDTO | null> {
+        
+        try {
+            const user = await User.findOne({
+                where: { verification_token: { [Op.eq]: token } }
+            });
+
+            return user ? (user.get({ plain: true }) as VerificationTokenDTO) : null;
+
+        }
+
+        catch (error) {
+            console.error('Error findByVerificationToken:', error);
+            throw error;
+        }
+
+    }
 
 }

@@ -1,13 +1,21 @@
 import {Router, Request, Response} from 'express';
 import { UserServiceInterface  } from '../service/user.service';
-import UserDTO, { CreateUserDTO, UpdateUserDTO, ServiceUserDTO } from '../dto/user.dto';
+import UserDTO, { CreateUserDTO, UpdateUserDTO, ServiceUserDTO, PasswordUpdateDTO } from '../dto/user.dto';
 import ResponseDTO from '../dto/response.dto';
+
+const USER_UPDATE_FIELDS = ['username', 'email', 'role', 'is_verified'];
+const USER_PASSWORD_UPDATE_FIELDS = ['current_password', 'new_password'];
 
 export interface userHandlerInterface {
     setUpRoutes(): void;
     getRouter(): Router;
 }
 
+function invalidFields(providedFields: string[], allowedFields: string[]): string[] {
+    return providedFields.filter(
+        key => !allowedFields.includes(key)
+    );
+}
 
 export class UserHandler implements userHandlerInterface {
 
@@ -22,10 +30,12 @@ export class UserHandler implements userHandlerInterface {
 
     public setUpRoutes(): void {
         this.router.get('/email/', this.getUserByEmail.bind(this));
+        this.router.get('/verify-email/', this.verifyUser.bind(this));
         this.router.get('/', this.getAllUsers.bind(this));
         this.router.get('/:id', this.getUserById.bind(this));
         this.router.post('/', this.createUser.bind(this));
         this.router.put('/:id', this.updateUser.bind(this));
+        this.router.put('/:id/password', this.updatePassword.bind(this));
         this.router.delete('/:id', this.deleteUser.bind(this));
         this.router.post('/login', this.login.bind(this));
     }
@@ -209,6 +219,25 @@ export class UserHandler implements userHandlerInterface {
                 
             }
 
+
+            //Validate only allowed fields
+            const invalidF = invalidFields(
+                Object.keys(req.body),
+                USER_UPDATE_FIELDS
+            );
+
+            if (invalidF.length > 0){
+
+                response = {
+                    status: 400,
+                    message: `Invalid fields for update: ${invalidF.join(', ')}`,
+                };
+
+                res.status(400).json(response);
+                return;
+            }
+
+
             const userData: UpdateUserDTO = req.body;
             const updatedUser = await this.userService.updateUser(id, userData);
 
@@ -255,6 +284,85 @@ export class UserHandler implements userHandlerInterface {
         }
 
     }
+
+
+    private async updatePassword(req: Request, res: Response): Promise<void> {
+
+        let response: ResponseDTO<never>;
+        
+        try {
+            const id = parseInt(req.params.id!);
+            const passwordData: PasswordUpdateDTO = req.body;
+
+            if (isNaN(id) || id <= 0) {
+                response = {
+                    status: 400,
+                    message: 'Invalid ID. Must be a positive integer',
+                };
+                res.status(400).json(response);
+                return;
+            }
+
+            if (!passwordData.current_password || !passwordData.new_password) {
+                response = {
+                    status: 400,
+                    message: 'Both current_password and new_password are required',
+                };
+                res.status(400).json(response);
+                return;
+            }
+
+            //Validate only allowed fields
+            const invalidF = invalidFields(
+                Object.keys(req.body),
+                USER_PASSWORD_UPDATE_FIELDS
+            );
+
+            if (invalidF.length > 0){
+
+                response = {
+                    status: 400,
+                    message: `Invalid fields for update: ${invalidF.join(', ')}`,
+                };
+
+                res.status(400).json(response);
+                return;
+            }
+
+
+            await this.userService.updatePassword(id, passwordData);
+            
+            response = {
+                status: 200,
+                message: 'Password updated successfully',
+            };
+            res.status(200).json(response);
+        }
+
+        catch( error) {
+
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+            //Business validation errors
+            if (errorMessage.includes('not found') ||
+                errorMessage.includes('incorrect') ||
+                errorMessage.includes('Password must be')) {
+                response = {
+                    status: 400,
+                    message: errorMessage,
+                };
+                res.status(400).json(response);
+                return;
+            }
+
+            response = {
+                status: 500,
+                message: `Error updatePassword: ${errorMessage}`,
+            };
+            res.status(500).json(response);
+        }
+    }
+
 
 
     private async deleteUser(req: Request, res: Response): Promise <void> {
@@ -399,7 +507,20 @@ export class UserHandler implements userHandlerInterface {
         }
 
         catch (error) {
+
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+            if (errorMessage.includes('not found') ||
+                errorMessage.includes('not verified') ||
+                errorMessage.includes('Invalid password')) {
+                response = {
+                    status: 400,
+                    message: errorMessage,
+                };
+                res.status(400).json(response);
+                return;
+            }
+
             response = {
                 status: 500,
                 message: `Error login: ${errorMessage}`,
@@ -415,11 +536,55 @@ export class UserHandler implements userHandlerInterface {
     }  
 
 
+    private async verifyUser(req: Request, res: Response): Promise <void> {
+        
+        let response: ResponseDTO<never>;
+        const token = req.query.token as string;
+
+        try {
+
+            if (!token || token.trim() === '') {
+                response = {
+                    status: 400,
+                    message: 'Token parameter must be a non-empty string',
+                };
+                res.status(400).json(response);
+                return;
+            }
+
+            await this.userService.verifyUser(token);
+            
+            response = {
+                status: 200,
+                message: 'User verified successfully',
+            };
+            res.status(200).json(response);
+        }
+
+        catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+            if (errorMessage.includes('not found')) {
+                response = {
+                    status: 404,
+                    message: errorMessage,
+                };
+                res.status(404).json(response);
+                return;
+            }
+
+            response = {
+                status: 500,
+                message: `Error verifyUser: ${errorMessage}`,
+            };
+            res.status(500).json(response);
+        }
+    }
+
+
+
 }
 
 
 
-
-
-        
 
