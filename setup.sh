@@ -11,7 +11,7 @@ echo "Todas las dependencias del sistema están instaladas"
 # 2. Levantar la base de datos desde Backend
 
 echo "Levantando base de datos con Docker..."
-docker compose -f Proyecto/Backend/docker-compose.yml up -d || { echo "Error al levantar Docker."; exit 1; }
+sudo docker compose -f Proyecto/Backend/docker-compose.yml up -d || { echo "Error al levantar Docker."; exit 1; }
 echo "Base de datos levantada correctamente"
 
 # 3.Esperar que la BD esté lista
