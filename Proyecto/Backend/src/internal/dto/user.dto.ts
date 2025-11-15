@@ -52,3 +52,13 @@ export interface PasswordUpdateDTO{
     current_password: string;
     new_password: string;
 }
+
+
+export interface GoogleUserDTO{
+    google_id: string;
+    email: string;
+    username: string;
+    role: string;
+    is_verified: boolean;
+    provider: string;
+}

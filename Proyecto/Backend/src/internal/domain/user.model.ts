@@ -19,7 +19,17 @@ const UserModel = sequelize.define('User', {
   },
   hash_password: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
+  },
+  provider: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: 'local', // 'local' or 'google'
+  },
+  google_id: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    unique: true,
   },
   role: {
     type: DataTypes.STRING,

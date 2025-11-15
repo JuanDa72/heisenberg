@@ -1,5 +1,5 @@
 import User from "../domain/user.model";
-import UserDTO, { CreateUserDTO, UpdateUserDTO, ServiceUserDTO, VerificationTokenDTO } from "../dto/user.dto";
+import UserDTO, { CreateUserDTO, UpdateUserDTO, ServiceUserDTO, VerificationTokenDTO, GoogleUserDTO } from "../dto/user.dto";
 import { Op, UniqueConstraintError, ValidationError } from "sequelize";
 
 export interface UserRepositoryInterface {
@@ -14,6 +14,8 @@ export interface UserRepositoryInterface {
     findByEmailForLogin(email: string): Promise<ServiceUserDTO | null>;
     findByVerificationToken(token: string): Promise<VerificationTokenDTO | null>;
     updatePassword(id: number, hash_password: string): Promise<void>;
+    findByGoogleId(google_id: string): Promise<UserDTO | null>;
+    createUserFromGoogle(googleUserData: GoogleUserDTO): Promise<UserDTO>;
 }    
 
 export class UserRepository{
@@ -107,6 +109,30 @@ export class UserRepository{
             throw new Error('Error creating user in database');
 
         }
+    }
+
+    async createUserFromGoogle(googleUserData: GoogleUserDTO): Promise<UserDTO> {
+
+        try {
+            const user = await User.create(googleUserData as any);
+            const plain = user.get({ plain: true });
+            delete plain.hash_password;
+            return plain as UserDTO;
+        }
+
+        catch (error) {
+            if (error instanceof UniqueConstraintError) {
+                throw new Error(`User with email "${googleUserData.email}" already exists in database`);
+            }
+
+            if (error instanceof ValidationError) {
+                throw new Error(`Database validation error: ${error.message}`);
+            }
+
+            console.error('Error createUserFromGoogle:', error);
+            throw new Error('Error creating user from Google in database');
+        }
+
     }
 
     async update(id: number, userData: UpdateUserDTO): Promise<UserDTO | null> {
@@ -208,7 +234,11 @@ export class UserRepository{
                 where: {email: {[Op.eq] : email}}
             });
 
-            const plain = user?.get({plain:true});
+            if(!user){
+                return null;
+            }
+
+            const plain = user.get({plain:true});
             delete plain.hash_password;
             return plain as UserDTO;
         }
@@ -254,5 +284,31 @@ export class UserRepository{
         }
 
     }
+
+
+    async findByGoogleId(google_id: string): Promise<UserDTO | null> {
+
+        try {
+
+            const user=await User.findOne({
+                where: {google_id: {[Op.eq] : google_id}}
+            });
+
+            if(!user){
+                return null;
+            }
+
+            return user.get({plain:true}) as UserDTO;
+
+          }
+
+        catch (error) {
+            console.error('Error findByGoogleId:', error);
+            throw error;
+        }
+
+    }
+
+
 
 }

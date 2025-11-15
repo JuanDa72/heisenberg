@@ -2,6 +2,8 @@ import {Router, Request, Response} from 'express';
 import { UserServiceInterface  } from '../service/user.service';
 import UserDTO, { CreateUserDTO, UpdateUserDTO, ServiceUserDTO, PasswordUpdateDTO } from '../dto/user.dto';
 import ResponseDTO from '../dto/response.dto';
+import passport from 'passport';
+import jwt from 'jsonwebtoken';
 
 const USER_UPDATE_FIELDS = ['username', 'email', 'role', 'is_verified'];
 const USER_PASSWORD_UPDATE_FIELDS = ['current_password', 'new_password'];
@@ -29,6 +31,10 @@ export class UserHandler implements userHandlerInterface {
     }
 
     public setUpRoutes(): void {
+        this.router.get('/auth/google', passport.authenticate('google', { 
+            scope: ['profile', 'email'], 
+            session: false}));
+        this.router.get('/auth/google/callback', this.googleAuthCallback.bind(this));
         this.router.get('/email/', this.getUserByEmail.bind(this));
         this.router.get('/verify-email/', this.verifyUser.bind(this));
         this.router.get('/', this.getAllUsers.bind(this));
@@ -579,6 +585,47 @@ export class UserHandler implements userHandlerInterface {
             };
             res.status(500).json(response);
         }
+    }
+
+    private async googleAuthCallback(req: Request, res: Response, next: Function): Promise<void> {
+        
+        passport.authenticate('google', { 
+            session: false,
+            failureRedirect: 'http://localhost:4200/login/error'
+        }, 
+        (err: any, user: UserDTO, info: any) => {
+
+            if (err) {
+                return res.redirect(`http://localhost:4200/login/error?message=${encodeURIComponent(err.message)}`);
+            }
+
+            if (!user) {
+                return res.redirect(`http://localhost:4200/login/error?message=Google%20login%20cancelled`);
+            }
+
+            try {
+                const jwtSecret = process.env.JWT_SECRET;
+
+                if (!jwtSecret) {
+                    console.error('FATAL ERROR: JWT_SECRET is not defined in .env');
+                    return res.redirect(`http://localhost:4200/login/error?message=Server%20configuration%20error`);
+                }
+                
+                // Creamos nuestro propio Token de Sesión (JWT)
+                const token = jwt.sign(
+                    { id: user.id, email: user.email, role: user.role },
+                    jwtSecret,
+                    { expiresIn: '8h' } 
+                );
+
+                res.redirect(`http://localhost:4200/auth/callback?token=${token}`);
+
+            } catch (jwtError) {
+                console.error("Error creating JWT:", jwtError);
+                res.redirect(`http://localhost:4200/login/error?message=Server%20error%20creating%20session`);
+            }
+
+        })(req, res, next); // ¡Importante! Llama al middleware de Passport
     }
 
 

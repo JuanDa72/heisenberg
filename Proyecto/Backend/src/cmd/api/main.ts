@@ -7,6 +7,8 @@ config();
 import express, { json } from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
+import passport from 'passport';
+import '../../internal/config/passport';
 
 import { createRepository } from '../../internal/repository/repository';
 import { createService } from '../../internal/service/service';
@@ -18,6 +20,7 @@ const app=express();
 app.use(json());
 app.use(morgan('common:date[web]'));
 app.use(cors());
+app.use(passport.initialize());
 
 
 // Setup architecture

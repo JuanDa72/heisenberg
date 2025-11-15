@@ -1,5 +1,5 @@
 import { UserRepositoryInterface } from "../repository/user.repository";
-import UserDTO, { CreateUserDTO, ServiceUserDTO, UpdateUserDTO, PasswordUpdateDTO } from "../dto/user.dto";
+import UserDTO, { CreateUserDTO, ServiceUserDTO, UpdateUserDTO, PasswordUpdateDTO, GoogleUserDTO } from "../dto/user.dto";
 import bcrypt from 'bcrypt';  
 import crypto from 'crypto';  
 import { sendVerificationEmail } from "./email.service";
@@ -15,6 +15,7 @@ export interface UserServiceInterface {
   login(email: string, password: string): Promise<UserDTO>;
   verifyUser(token: string): Promise<void>;
   updatePassword(id: number, passwordData: PasswordUpdateDTO): Promise<void>;
+  createUserFromGoogle(googleUserData: GoogleUserDTO): Promise<UserDTO>;
 
 }
 
@@ -286,7 +287,21 @@ export class UserService implements UserServiceInterface {
     }
 
 
+    async createUserFromGoogle(googleUserData: GoogleUserDTO): Promise<UserDTO> {
 
+        if (!isValidRole(googleUserData.role)) {
+            throw new Error(`Invalid role. Allowed roles are: admin, user`);
+        }
+
+        try {
+            const user = await this.userRepository.createUserFromGoogle(googleUserData);
+            return user;
+        } catch (error) {
+            console.error('Error createUserFromGoogle:', error);
+            throw error;
+        }
+
+    }
 
 
 
