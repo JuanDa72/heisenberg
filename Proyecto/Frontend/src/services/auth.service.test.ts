@@ -1,57 +1,145 @@
-/**
- * Test para auth.service.ts
- * Prueba: Login de usuario
- */
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { authService } from './auth.service';
 import apiClient from './api.config';
+import { AxiosError } from 'axios';
 
+// Mock de la API
 vi.mock('./api.config');
 
-describe('AuthService - Login', () => {
+// Datos de prueba
+const mockUser = {
+  id: 1,
+  username: 'testuser',
+  email: 'test@example.com',
+  role: 'user',
+  createdAt: '2023-01-01T00:00:00Z',
+  updatedAt: '2023-01-01T00:00:00Z',
+};
+
+describe('AuthService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
-  /**
-   * Test: Hacer login con email y contraseña
-   * 
-   * ¿Qué prueba?
-   * - Que el servicio envíe las credenciales al backend
-   * - Que retorne los datos del usuario si el login es exitoso
-   * - Que incluya el rol del usuario (admin o user)
-   * 
-   * Caso límite: ¿Qué pasa si las credenciales son incorrectas? 
-   * El backend retorna error
-   */
-  it('debe hacer login y retornar datos del usuario', async () => {
-    // Simular respuesta exitosa del backend
-    const usuarioAutenticado = {
-      id: 1,
-      username: 'admin',
-      email: 'admin@heisenberg.com',
-      role: 'admin',
-    };
+  describe('login', () => {
+    it('debe hacer login exitosamente con credenciales válidas', async () => {
+      // Configurar el mock para simular respuesta exitosa
+      vi.mocked(apiClient.post).mockResolvedValueOnce({
+        data: {
+          status: 200,
+          message: 'Login exitoso',
+          data: mockUser,
+        },
+      });
 
-    // Configurar el mock
-    vi.mocked(apiClient.post).mockResolvedValueOnce({
-      data: {
-        status: 200,
-        message: 'Login successful',
-        data: usuarioAutenticado,
-      },
+      const result = await authService.login('test@example.com', 'password123');
+      
+      // Verificar que se llamó a la API con los parámetros correctos
+      expect(apiClient.post).toHaveBeenCalledWith(
+        '/users/login',
+        { email: 'test@example.com', password: 'password123' }
+      );
+      
+      // Verificar que se devuelven los datos del usuario
+      expect(result).toEqual(mockUser);
     });
 
-    // Intentar hacer login
-    const resultado = await authService.login(
-      'admin@heisenberg.com',
-      'password123'
-    );
 
-    // Verificar que retornó los datos correctos
-    expect(resultado.username).toBe('admin');
-    expect(resultado.role).toBe('admin');
-    expect(resultado.email).toBe('admin@heisenberg.com');
+    it('debe manejar errores de red', async () => {
+      // Simular un error de red
+      vi.mocked(apiClient.post).mockRejectedValueOnce(new Error('Error de red'));
+
+      await expect(authService.login('test@example.com', 'password123'))
+        .rejects
+        .toThrow('Error al conectar con el servidor');
+    });
+  });
+
+  describe('getUserByEmail', () => {
+    it('debe obtener un usuario por email', async () => {
+      // Configurar el mock para simular respuesta exitosa
+      vi.mocked(apiClient.get).mockResolvedValueOnce({
+        data: {
+          status: 200,
+          message: 'Usuario encontrado',
+          data: mockUser,
+        },
+      });
+
+      const result = await authService.getUserByEmail('test@example.com');
+      
+      // Verificar que se llamó a la API con los parámetros correctos
+      expect(apiClient.get).toHaveBeenCalledWith(
+        '/users/email/',
+        { params: { email: 'test@example.com' } }
+      );
+      
+      // Verificar que se devuelven los datos del usuario
+      expect(result).toEqual(mockUser);
+    });
+
+    it('debe lanzar un error si el usuario no existe', async () => {
+      // Configurar el mock para simular que el usuario no existe
+      const errorResponse = {
+        response: {
+          data: {
+            message: 'Error al obtener usuario',
+          },
+        },
+      };
+      
+      vi.mocked(apiClient.get).mockRejectedValueOnce(errorResponse);
+
+      // Verificar que se lanza el error correcto
+      await expect(authService.getUserByEmail('nonexistent@example.com'))
+        .rejects
+        .toThrow('Error al obtener usuario');
+    });
+  });
+
+  describe('getAllUsers', () => {
+    it('debe obtener todos los usuarios con paginación', async () => {
+      const mockUsers = [mockUser, { ...mockUser, id: 2, email: 'test2@example.com' }];
+      
+      // Configurar el mock para simular respuesta exitosa
+      vi.mocked(apiClient.get).mockResolvedValueOnce({
+        data: {
+          status: 200,
+          message: 'Usuarios obtenidos',
+          data: mockUsers,
+        },
+      });
+
+      const result = await authService.getAllUsers(10, 0);
+      
+      // Verificar que se llamó a la API con los parámetros correctos
+      expect(apiClient.get).toHaveBeenCalledWith(
+        '/users/',
+        { params: { limit: 10, offset: 0 } }
+      );
+      
+      // Verificar que se devuelven los usuarios
+      expect(result).toEqual(mockUsers);
+    });
+
+    it('debe manejar la paginación por defecto', async () => {
+      // Configurar el mock para simular respuesta exitosa
+      vi.mocked(apiClient.get).mockResolvedValueOnce({
+        data: {
+          status: 200,
+          message: 'Usuarios obtenidos',
+          data: [mockUser],
+        },
+      });
+
+      await authService.getAllUsers();
+      
+      // Verificar que se usan los valores por defecto
+      expect(apiClient.get).toHaveBeenCalledWith(
+        '/users/',
+        { params: { limit: undefined, offset: undefined } }
+      );
+    });
   });
 });
