@@ -29,6 +29,7 @@ const MockedUserRepository = {
   findByEmailForLogin: jest.fn(),
   findByEmail: jest.fn(),
   create: jest.fn(),
+  findById: jest.fn(),
 } as any;
 
 //Test de Login
@@ -262,4 +263,44 @@ describe('UserService - createUser', () => {
 
 });
 
+
+describe('UserService - getUser', () => {
+
+    let userService: UserService;
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        userService = new UserService(MockedUserRepository as UserRepositoryInterface);
+    });
+
+    test('should throw an error if user not found', async () => {
+        const userId = 1;
+
+        MockedUserRepository.findById.mockResolvedValue(null);
+
+        await expect(userService.getUser(userId)).rejects.toThrow(`User with ID ${userId} not found`);
+
+        expect(MockedUserRepository.findById).toHaveBeenCalledWith(userId);
+    });
+
+    test('should return user data if user is found', async () => {
+        const userId = 1;
+
+        const mockUserDTO: userDTO = {
+            id: userId,
+            username: "TestUser",
+            email: "test@example.com",
+            role: "user",
+            created_at: new Date(Date.now()),
+        };
+
+        MockedUserRepository.findById.mockResolvedValue(mockUserDTO);
+        
+        const result = await userService.getUser(userId);
+
+        expect(result).toEqual(mockUserDTO);
+        expect(MockedUserRepository.findById).toHaveBeenCalledWith(userId);
+    });
+
+});
 
