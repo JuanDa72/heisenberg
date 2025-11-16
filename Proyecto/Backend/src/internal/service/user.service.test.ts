@@ -196,27 +196,6 @@ describe('UserService - createUser', () => {
         await expect(userService.createUser(mockCreateUserDTO)).rejects.toThrow('Invalid role. Allowed roles are: admin, user');
     });
 
-    test('Should create user successfully with valid data', async () => {
-
-        const email = "test@example.com";
-        const username = "TestUser";
-        const password = "Validpassword_1";
-        const role = "user";
-
-        const mockCreateUserDTO = {
-            username: username,
-            email: email,
-            password: password,
-            role: role
-        };
-
-        //Mockeamos bcrypt.hash
-        const hashedPassword = "hashedValidpassword_1";
-        mockedBcrypt.hash.mockResolvedValue(hashedPassword as never);
-        const mockVerificationToken = "verification_token_123";
-        mockedBcrypt.randomBytes.mockReturnValue);
-
-
 });
 
 
