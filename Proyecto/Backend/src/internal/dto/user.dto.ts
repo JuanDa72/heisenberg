@@ -10,7 +10,6 @@ export interface CreateUserDTO{
 export interface UpdateUserDTO{
     username?: string;
     email?: string;
-    password?: string;
     role?: string;
     verification_token?: string;
     token_expiry_at?: Date;

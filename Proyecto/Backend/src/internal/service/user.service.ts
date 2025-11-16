@@ -16,6 +16,7 @@ export interface UserServiceInterface {
   verifyUser(token: string): Promise<void>;
   updatePassword(id: number, passwordData: PasswordUpdateDTO): Promise<void>;
   createUserFromGoogle(googleUserData: GoogleUserDTO): Promise<UserDTO>;
+  resendVerificationEmail(userEmail: string): Promise<void>;
 
 }
 
@@ -144,12 +145,6 @@ export class UserService implements UserServiceInterface {
                 }
             }
 
-            //TO DO: Crear un método que se encargue del cambio de contraseña
-            if(userData.password){
-                userData.password = await bcrypt.hash(userData.password, 10);
-            }
-
-
             const updateUser = await this.userRepository.update(id, userData);
             if (!updateUser) {
                 throw new Error(`Error updating user with ID ${id}`);
@@ -272,6 +267,7 @@ export class UserService implements UserServiceInterface {
 
             if(user.token_expiry_at < new Date()){
                 throw new Error('Verification token has expired');
+
             }
 
             this.updateUser(user.id, {
@@ -304,6 +300,35 @@ export class UserService implements UserServiceInterface {
     }
 
 
+    async resendVerificationEmail(userEmail: string): Promise<void> {
+
+        try {
+            const user = await this.userRepository.findForResendVerificationEmail(userEmail);
+            if (!user) {
+                throw new Error(`User with email "${userEmail}" not found`);
+            }
+
+            if (user.is_verified) {
+                throw new Error('User is already verified');
+            }
+
+            const verification = generateVerificationToken();
+
+            this.updateUser(user.id, {
+                verification_token: verification.token,
+                token_expiry_at: verification.expiry
+            });
+
+            await sendVerificationEmail(userEmail, verification.token);
+
+        }
+
+        catch (error) {
+            console.error('Error resendVerificationEmail:', error);
+            throw error;
+        }
+
+    }
 
 }
 

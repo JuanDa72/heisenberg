@@ -16,6 +16,7 @@ export interface UserRepositoryInterface {
     updatePassword(id: number, hash_password: string): Promise<void>;
     findByGoogleId(google_id: string): Promise<UserDTO | null>;
     createUserFromGoogle(googleUserData: GoogleUserDTO): Promise<UserDTO>;
+    findForResendVerificationEmail(email: string): Promise<VerificationTokenDTO | null>;
 }    
 
 export class UserRepository{
@@ -265,6 +266,26 @@ export class UserRepository{
             throw error;
         }
 
+    }
+
+    async findForResendVerificationEmail(email: string): Promise<VerificationTokenDTO | null> {
+
+        try {
+            const user = await User.findOne({
+                where: { email: { [Op.eq]: email } }
+            });
+
+            if (!user) {
+                return null;
+            }
+
+            return user.get({ plain: true }) as VerificationTokenDTO;   
+        }
+
+        catch (error) {
+            console.error('Error findForResendVerificationEmail:', error);
+            throw error;
+        }
     }
 
     async findByVerificationToken(token: string): Promise<VerificationTokenDTO | null> {

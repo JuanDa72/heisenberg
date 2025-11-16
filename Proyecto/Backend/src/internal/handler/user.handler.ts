@@ -44,6 +44,7 @@ export class UserHandler implements userHandlerInterface {
         this.router.put('/:id/password', this.updatePassword.bind(this));
         this.router.delete('/:id', this.deleteUser.bind(this));
         this.router.post('/login', this.login.bind(this));
+        this.router.post('/resend-verification-email/', this.resendVerificationEmail.bind(this));
     }
 
     private async getAllUsers(req: Request, res: Response): Promise<void> {
@@ -628,6 +629,61 @@ export class UserHandler implements userHandlerInterface {
         })(req, res, next); // ¡Importante! Llama al middleware de Passport
     }
 
+
+    private async resendVerificationEmail(req: Request, res: Response): Promise<void> {
+        
+        let response: ResponseDTO<never>;
+        const email = req.query.email as string;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        try {
+
+            if (!email || email.trim() === '') {
+                response = {
+                    status: 400,
+                    message: 'Email parameter must be a non-empty string',
+                };
+                res.status(400).json(response);
+                return;
+            }
+
+            if (!emailRegex.test(email)) {
+                response = {
+                    status: 400,
+                    message: 'Invalid email format',
+                };
+                res.status(400).json(response);
+                return;
+            }
+
+            await this.userService.resendVerificationEmail(email);
+
+            response = {
+                status: 200,
+                message: 'Verification email resent successfully',
+            };
+            res.status(200).json(response);
+        }
+
+        catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+            if (errorMessage.includes('not found')) {
+                response = {
+                    status: 404,
+                    message: errorMessage,
+                };
+                res.status(404).json(response);
+                return;
+            }
+
+            response = {
+                status: 500,
+                message: `Error resendVerificationEmail: ${errorMessage}`,
+            };
+            res.status(500).json(response);
+        }
+    }
 
 
 }
