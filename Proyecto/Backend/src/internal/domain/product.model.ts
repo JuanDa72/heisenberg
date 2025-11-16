@@ -56,6 +56,6 @@ const Product = sequalize.define('Product', {
   timestamps: false,
 });
 
-Product.sync();
+//Product.sync();
 
 export default Product;
