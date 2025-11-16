@@ -8,16 +8,23 @@ import crypto from 'crypto';
 import { sendVerificationEmail } from "./email.service";
 import { create } from "domain";
 
+jest.mock('./email.service', () => ({
+  __esModule: true, // Necesario para ES Modules
+  // Creamos una función mock falsa para 'sendVerificationEmail'
+  sendVerificationEmail: jest.fn(), 
+}));
+
+
 //Remplazamos las dependencias por mocks
 jest.mock('../repository/user.repository');
 jest.mock('bcrypt');
 jest.mock('crypto');
-jest.mock('./email.service');
+
 
 //Para no tener problemas con los tipos :)
 const mockedBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
 const mockedCrypto = crypto as jest.Mocked<typeof crypto>;
-const mockedSendVerificationEmail = sendVerificationEmail as jest.MockedFunction<typeof sendVerificationEmail>;
+const mockedSendVerificationEmail = sendVerificationEmail as jest.Mock;
 const MockedUserRepository = {
   findByEmailForLogin: jest.fn(),
   findByEmail: jest.fn(),
@@ -213,8 +220,44 @@ describe('UserService - createUser', () => {
         //Mockeamos bcrypt.hash
         const hashedPassword = "hashedValidpassword_1";
         mockedBcrypt.hash.mockResolvedValue(hashedPassword as never);
-        const mockVerificationToken = "verification_token_123";
-        mockedBcrypt.randomBytes.mockReturnValue);
+
+        //Mockeamos crypto.randomBytes para el token de verificación
+        const mockToken = 'mi-token-fijo-de-prueba';
+        // Forzamos el tipo a 'jest.Mock' para evitar el error de sobrecarga
+        (mockedCrypto.randomBytes as jest.Mock).mockReturnValue({
+            toString: (encoding: string) => {
+                // Tu código llama a .toString('hex'), así que lo simulamos
+                if (encoding === 'hex') {
+                    return mockToken;
+                }
+                return 'token-default';
+            }
+        });
+
+        //Mockeamos la creación del usuario en el repositorio
+        const mockCreatedUser: userDTO = {
+            id: 1,
+            username: username,
+            email: email,
+            role: role,
+            created_at: new Date(Date.now()),
+        };
+
+        MockedUserRepository.create.mockResolvedValue(mockCreatedUser);
+
+        //Mockear envio de correo 
+        mockedSendVerificationEmail.mockResolvedValue(undefined);
+
+        const result = await userService.createUser(mockCreateUserDTO);
+
+        expect(result).toEqual(mockCreatedUser);
+
+        //Verificamos que se hayan llamado los mocks
+        expect(mockedBcrypt.hash).toHaveBeenCalledWith(password, 10);
+        expect(mockedCrypto.randomBytes).toHaveBeenCalledWith(32);
+        expect(mockedSendVerificationEmail).toHaveBeenCalledWith(email, mockToken);
+
+    });
 
 
 });
