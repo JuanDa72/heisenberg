@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react';
-import { useAuth } from '../use-auth';
+import { useAuth } from './use-auth';
 import { authService } from '@/services';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import type { User } from '@/types/user.types';
