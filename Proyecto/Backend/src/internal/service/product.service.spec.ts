@@ -1,5 +1,5 @@
 import { ProductRepositoryInterface } from '../repository/product.repository'
-import ProductDTO, { CreateProductDTO, UpdateProductDTO } from '../dto/product.dto';
+import ProductDTO, { CreateProductDTO } from '../dto/product.dto';
 import { ProductService } from './product.service';
 
 /**

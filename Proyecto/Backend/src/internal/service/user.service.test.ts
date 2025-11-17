@@ -3,10 +3,8 @@ import { UserService } from "./user.service";
 import { UserRepositoryInterface } from "../repository/user.repository";
 import bcrypt from 'bcrypt';
 import userDTO from '../dto/user.dto';
-import { ServiceUserDTO } from "../dto/user.dto";
 import crypto from 'crypto';
 import { sendVerificationEmail } from "./email.service";
-import { create } from "domain";
 
 jest.mock('./email.service', () => ({
   __esModule: true, // Necesario para ES Modules
@@ -25,13 +23,13 @@ jest.mock('crypto');
 const mockedBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
 const mockedCrypto = crypto as jest.Mocked<typeof crypto>;
 const mockedSendVerificationEmail = sendVerificationEmail as jest.Mock;
-const MockedUserRepository = {
+const MockedUserRepository= {
   findByEmailForLogin: jest.fn(),
   findByEmail: jest.fn(),
   create: jest.fn(),
   findById: jest.fn(),
 } as any;
-
+    
 //Test de Login
 describe('UserService - Login', () => {
 

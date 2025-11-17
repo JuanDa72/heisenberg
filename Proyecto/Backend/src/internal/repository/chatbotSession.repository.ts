@@ -1,6 +1,6 @@
 import ChatbotSession  from "../domain/chatbotSession.model";
 import { ChatbotSessionDTO, CreateChatbotSessionDTO, UpdateChatbotSessionDTO } from "../dto/chatbotSession.dto";
-import { Op, UniqueConstraintError, ValidationError } from "sequelize";
+import { FindOptions } from "sequelize";
 
 export interface ChatbotSessionRepositoryInterface {
     create(createChatbotSessionDTO: CreateChatbotSessionDTO): Promise<ChatbotSessionDTO>;
@@ -76,9 +76,10 @@ export class ChatbotSessionRepository implements ChatbotSessionRepositoryInterfa
     async findAll(limit ?: number, offset? :number): Promise <ChatbotSessionDTO[]> {
 
         try {
-            const options: any = {
-                order: [['created_at', 'DESC']]
-            }
+            
+            const options: FindOptions = {
+            order: [['created_at', 'DESC']]
+        }
 
             if (limit !== undefined) options.limit = limit;
             if (offset !== undefined) options.offset = offset;

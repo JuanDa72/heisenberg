@@ -1,6 +1,6 @@
 import Product from '../domain/product.model';
 import ProductDTO from '../dto/product.dto';
-import { Op, UniqueConstraintError, ValidationError } from 'sequelize';
+import { Op, UniqueConstraintError, ValidationError, FindOptions, CreationAttributes} from 'sequelize';
 
 export interface ProductRepositoryInterface {
     findById(id: number): Promise<ProductDTO | null>;
@@ -26,7 +26,7 @@ export class ProductRepository {
 
   async findAll(limit?: number, offset?: number): Promise<ProductDTO[]> {
     try {
-      const options: any = {
+      const options: FindOptions = {
         order: [['created_at', 'DESC']]
       };
       if (limit !== undefined) options.limit = limit;
@@ -54,7 +54,7 @@ export class ProductRepository {
 
   async create(productData: Omit<ProductDTO, 'id' | 'created_at'>): Promise<ProductDTO> {
     try {
-      const product = await Product.create(productData as any);
+      const product = await Product.create(productData as CreationAttributes< InstanceType<typeof Product>>);
       return product.get({ plain: true }) as ProductDTO;
     } catch (error) {
       if (error instanceof UniqueConstraintError) {
@@ -75,7 +75,7 @@ export class ProductRepository {
         return null;
       }
       
-      await product.update(productData as any);
+      await product.update(productData as Partial<InstanceType<typeof Product>>);
       return product.get({ plain: true }) as ProductDTO;
     } catch (error) {
       if (error instanceof UniqueConstraintError) {

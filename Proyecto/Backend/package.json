@@ -6,7 +6,8 @@
   "scripts": {
     "start": "tsc; node ./dist/cmd/api/main.js",
     "dev": "concurrently \"npx tsc --watch\" \"nodemon ./dist/cmd/api/main.js\" ",
-    "test": "jest"
+    "test": "jest",
+    "lint": "eslint src --ext .ts"
   },
   "repository": {
     "type": "git",
@@ -19,6 +20,7 @@
   },
   "homepage": "https://github.com/JuanDa72/heisenberg#readme",
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
@@ -30,11 +32,16 @@
     "@types/passport": "^1.0.17",
     "@types/passport-google-oauth20": "^2.0.17",
     "@types/sequelize": "^4.28.20",
+    "@typescript-eslint/eslint-plugin": "^8.46.4",
+    "@typescript-eslint/parser": "^8.46.4",
     "concurrently": "^9.2.1",
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0",
     "jest": "^30.2.0",
     "nodemon": "^3.1.10",
     "ts-jest": "^29.4.5",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.4"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

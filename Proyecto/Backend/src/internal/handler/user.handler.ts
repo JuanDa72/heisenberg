@@ -1,6 +1,6 @@
-import {Router, Request, Response} from 'express';
+import {Router, Request, Response, NextFunction} from 'express';
 import { UserServiceInterface  } from '../service/user.service';
-import UserDTO, { CreateUserDTO, UpdateUserDTO, ServiceUserDTO, PasswordUpdateDTO } from '../dto/user.dto';
+import UserDTO, { CreateUserDTO, UpdateUserDTO, PasswordUpdateDTO } from '../dto/user.dto';
 import ResponseDTO from '../dto/response.dto';
 import passport from 'passport';
 import jwt from 'jsonwebtoken';
@@ -588,13 +588,13 @@ export class UserHandler implements userHandlerInterface {
         }
     }
 
-    private async googleAuthCallback(req: Request, res: Response, next: Function): Promise<void> {
+    private async googleAuthCallback(req: Request, res: Response, next: NextFunction): Promise<void> {
         
         passport.authenticate('google', { 
             session: false,
             failureRedirect: 'http://localhost:4200/login/error'
         }, 
-        (err: any, user: UserDTO, info: any) => {
+        (err: Error | null, user: UserDTO, _info: unknown) => {
 
             if (err) {
                 return res.redirect(`http://localhost:4200/login/error?message=${encodeURIComponent(err.message)}`);
