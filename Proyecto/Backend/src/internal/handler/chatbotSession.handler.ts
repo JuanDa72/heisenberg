@@ -2,7 +2,6 @@ import {Router, Request, Response} from "express";
 import { ChatbotSessionServiceInterface } from "../service/chatbotSession.service";
 import { ChatbotSessionDTO, CreateChatbotSessionDTO, UpdateChatbotSessionDTO } from "../dto/chatbotSession.dto";
 import ResponseDTO from "../dto/response.dto";
-import { create } from "domain";
 
 const CHATBOTSESSIONS_UPDATE_FIELDS = ['is_active'];
 

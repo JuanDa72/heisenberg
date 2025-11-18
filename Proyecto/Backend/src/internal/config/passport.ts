@@ -1,8 +1,6 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 
-import { UserServiceInterface } from "../service/user.service";
-import { UserRepositoryInterface } from "../repository/user.repository";
 import {config} from 'dotenv';
 
 import { UserRepository } from "../repository/user.repository";
