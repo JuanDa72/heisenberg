@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,83 +18,71 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import type { User as UserType } from "@/types/user.types";
+import apiClient from "@/services/api.config";
 
 const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [displayName, setDisplayName] = useState("");
+  const [user, setUser] = useState<UserType | null>(null);
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [userRole, setUserRole] = useState<"admin" | "user">("user");
-  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
-  const loadProfile = async () => {
+  const loadProfile = useCallback(() => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
+      const savedUser = localStorage.getItem('user');
+      if (!savedUser) {
         navigate("/");
         return;
       }
 
-      setEmail(user.email || "");
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("user_id", user.id)
-        .single();
-
-      if (profile) {
-        setDisplayName(profile.display_name);
-      }
-
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id);
-
-      if (roles && roles.some(r => r.role === "admin")) {
-        setUserRole("admin");
-      }
+      const userData: UserType = JSON.parse(savedUser);
+      setUser(userData);
+      setUsername(userData.username);
+      setEmail(userData.email);
+      setUserRole(userData.role as "admin" | "user");
     } catch (error) {
       console.error("Error loading profile:", error);
+      toast({ title: "Error", description: "Error al cargar el perfil", variant: "destructive" });
+      navigate("/");
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate, toast]);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
 
   const handleUpdateProfile = async () => {
+    if (!user) return;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      await apiClient.put(`/users/${user.id}`, {
+        username: username,
+      });
 
-      const { error } = await supabase
-        .from("profiles")
-        .update({ display_name: displayName })
-        .eq("user_id", user.id);
-
-      if (error) throw error;
+      const updatedUser = { ...user, username };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
 
       toast({
         title: "Perfil actualizado",
         description: "Tu nombre se ha actualizado correctamente.",
       });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el perfil.",
-        variant: "destructive",
-      });
+      const errorMessage = error instanceof Error ? error.message : "Error al actualizar perfil";
+      toast({ title: "Error", description: errorMessage, variant: "destructive" });
     }
   };
 
   const handleChangePassword = async () => {
+    if (!user) return;
+
     if (newPassword !== confirmPassword) {
       toast({
         title: "Error",
@@ -115,49 +102,39 @@ const Profile = () => {
     }
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
+      await apiClient.put(`/users/${user.id}/password`, {
+        current_password: currentPassword,
+        new_password: newPassword,
       });
-
-      if (error) throw error;
 
       toast({
         title: "Contraseña actualizada",
         description: "Tu contraseña se ha cambiado correctamente.",
       });
-      
+
+      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo cambiar la contraseña.",
-        variant: "destructive",
-      });
+      const errorMessage = error instanceof Error ? error.message : "Error al actualizar contraseña";
+      toast({ title: "Error", description: errorMessage, variant: "destructive" });
     }
   };
 
   const handleDeleteAccount = async () => {
+    if (!user) return;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // This will trigger the cascade delete on profiles and user_roles
-      await supabase.auth.admin.deleteUser(user.id);
+      await apiClient.delete(`/users/${user.id}`);
+      localStorage.removeItem("user");
 
       toast({
         title: "Cuenta eliminada",
         description: "Tu cuenta ha sido eliminada correctamente.",
       });
-
-      await supabase.auth.signOut();
       navigate("/");
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar la cuenta. Contacta al administrador.",
-        variant: "destructive",
-      });
+      const errorMessage = error instanceof Error ? error.message : "Error al eliminar cuenta";
+      toast({ title: "Error", description: errorMessage, variant: "destructive" });
     }
   };
 
@@ -194,9 +171,7 @@ const Profile = () => {
                   {userRole === "admin" ? "Administrador" : "Usuario"}
                 </Badge>
               </div>
-              <CardDescription className="text-gray-400">
-                {email}
-              </CardDescription>
+              <CardDescription className="text-gray-400">{email}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -205,8 +180,8 @@ const Profile = () => {
                 </Label>
                 <Input
                   id="displayName"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="bg-black/60 border-white/20 text-white mt-2"
                 />
               </div>
@@ -225,6 +200,18 @@ const Profile = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="currentPassword" className="text-white">
+                  Contraseña Actual
+                </Label>
+                <Input
+                  id="currentPassword"
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="bg-black/60 border-white/20 text-white mt-2"
+                />
+              </div>
               <div>
                 <Label htmlFor="newPassword" className="text-white">
                   Nueva Contraseña
@@ -249,7 +236,11 @@ const Profile = () => {
                   className="bg-black/60 border-white/20 text-white mt-2"
                 />
               </div>
-              <Button onClick={handleChangePassword} className="w-full">
+              <Button 
+                onClick={handleChangePassword} 
+                className="w-full"
+                disabled={!currentPassword || !newPassword || !confirmPassword}
+              >
                 Cambiar Contraseña
               </Button>
             </CardContent>
@@ -275,9 +266,7 @@ const Profile = () => {
                 </AlertDialogTrigger>
                 <AlertDialogContent className="bg-navy border-white/10">
                   <AlertDialogHeader>
-                    <AlertDialogTitle className="text-white">
-                      ¿Estás seguro?
-                    </AlertDialogTitle>
+                    <AlertDialogTitle className="text-white">¿Estás seguro?</AlertDialogTitle>
                     <AlertDialogDescription className="text-gray-400">
                       Esta acción eliminará permanentemente tu cuenta y todos tus datos.
                       No podrás recuperar tu cuenta después de eliminarla.

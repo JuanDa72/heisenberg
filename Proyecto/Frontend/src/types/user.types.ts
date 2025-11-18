@@ -25,6 +25,9 @@ export interface CreateUserRequest {
   role: string;
 }
 
+// Alias para compatibilidad con el backend
+export type CreateUserDTO = CreateUserRequest;
+
 export interface ApiResponse<T> {
   status: number;
   message: string;
