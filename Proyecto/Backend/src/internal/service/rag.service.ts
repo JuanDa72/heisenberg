@@ -3,9 +3,9 @@ import { ChatOpenAI } from '@langchain/openai';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { ProductRepositoryInterface } from '../repository/product.repository';
 import { ChatbotMessageRepositoryInterface } from '../repository/chatbotMessage.repository';
-import ProductDTO from '../dto/product.dto';
 import ChatbotMessageDTO from '../dto/chatbotMessage.dto';
-import { Op } from 'sequelize';
+import { VectorStoreService } from './vectorstore.service';
+import * as path from 'path';
 
 export interface RAGServiceInterface {
     generateResponse(sessionId: number, userMessage: string): Promise<string>;
@@ -15,7 +15,9 @@ export class RAGService implements RAGServiceInterface {
 
     private productRepository: ProductRepositoryInterface;
     private chatbotMessageRepository: ChatbotMessageRepositoryInterface;
+    private vectorStoreService: VectorStoreService;
     private llm: ChatOpenAI;
+    private vectorStorePath: string;
 
     constructor(
         productRepository: ProductRepositoryInterface,
@@ -23,6 +25,7 @@ export class RAGService implements RAGServiceInterface {
     ) {
         this.productRepository = productRepository;
         this.chatbotMessageRepository = chatbotMessageRepository;
+        this.vectorStoreService = new VectorStoreService();
         
         // Initialize OpenAI with GPT-4 (best model)
         this.llm = new ChatOpenAI({
@@ -30,6 +33,9 @@ export class RAGService implements RAGServiceInterface {
             temperature: 0.7,
             openAIApiKey: process.env.OPENAI_API_KEY,
         });
+        
+        // Set vector store path
+        this.vectorStorePath = path.join(process.cwd(), 'data', 'vectorstore', 'faiss.index');
     }
 
     async generateResponse(sessionId: number, userMessage: string): Promise<string> {
@@ -37,18 +43,22 @@ export class RAGService implements RAGServiceInterface {
             // 1. Get conversation history (last 15 messages)
             const conversationHistory = await this.chatbotMessageRepository.findBySessionId(sessionId, 15);
             
-            // 2. Extract keywords from user message for product search
-            const keywords = this.extractKeywords(userMessage);
+            // 2. Get or create vector store with products
+            const allProducts = await this.productRepository.findAll();
+            const vectorStore = await this.vectorStoreService.getOrCreateVectorStore(
+                allProducts,
+                this.vectorStorePath
+            );
             
-            // 3. Search for relevant products
-            const relevantProducts = await this.searchRelevantProducts(keywords);
+            // 3. Retrieve relevant documents based on user message using similarity search
+            const relevantDocuments = await vectorStore.similaritySearch(userMessage, 5);
             
-            // 4. Build context string
-            const contextString = this.buildContextString(conversationHistory, relevantProducts);
+            // 5. Build context string from retrieved documents
+            const contextString = this.buildContextFromDocuments(relevantDocuments);
             
-            // 5. Build messages for LangChain
+            // 6. Build messages for LangChain
             const systemPrompt = this.getSystemPrompt() + '\n\n' + contextString;
-            const messages = [
+            const messages: (SystemMessage | HumanMessage)[] = [
                 new SystemMessage(systemPrompt),
             ];
             
@@ -64,7 +74,7 @@ export class RAGService implements RAGServiceInterface {
             // Add current user message
             messages.push(new HumanMessage(userMessage));
             
-            // 6. Generate response using LangChain
+            // 7. Generate response using LangChain
             const response = await this.llm.invoke(messages);
             
             return response.content as string;
@@ -74,61 +84,17 @@ export class RAGService implements RAGServiceInterface {
         }
     }
 
-    private extractKeywords(message: string): string[] {
-        // Simple keyword extraction - split by spaces and filter common words
-        const commonWords = ['el', 'la', 'los', 'las', 'un', 'una', 'de', 'del', 'para', 'con', 'por', 'que', 'es', 'son', 'estoy', 'tengo', 'necesito', 'quiero', 'busco', 'me', 'te', 'le', 'nos', 'os', 'les'];
-        const words = message.toLowerCase()
-            .replace(/[^\w\s]/g, ' ')
-            .split(/\s+/)
-            .filter(word => word.length > 2 && !commonWords.includes(word));
-        
-        return [...new Set(words)]; // Remove duplicates
-    }
-
-    private async searchRelevantProducts(keywords: string[]): Promise<ProductDTO[]> {
-        if (keywords.length === 0) {
-            // If no keywords, return all products (limited)
-            return await this.productRepository.findAll(10);
-        }
-
-        // Search products by name, type, or use_case
-        const allProducts: ProductDTO[] = [];
-        const seenIds = new Set<number>();
-
-        for (const keyword of keywords) {
-            // Search by name
-            const byName = await this.productRepository.findByNameLike(keyword);
-            for (const product of byName) {
-                if (!seenIds.has(product.id)) {
-                    allProducts.push(product);
-                    seenIds.add(product.id);
-                }
-            }
-        }
-
-        // If no products found, return all products (limited)
-        if (allProducts.length === 0) {
-            return await this.productRepository.findAll(10);
-        }
-
-        // Limit to 10 most relevant products
-        return allProducts.slice(0, 10);
-    }
-
-    private buildContextString(history: ChatbotMessageDTO[], products: ProductDTO[]): string {
+    private buildContextFromDocuments(documents: any[]): string {
         let context = '';
 
-        // Add product information
-        if (products.length > 0) {
-            context += 'PRODUCTOS DISPONIBLES:\n';
-            products.forEach(product => {
-                context += `- ${product.name} (${product.type})\n`;
-                context += `  Uso: ${product.use_case}\n`;
-                context += `  Advertencias: ${product.warnings}\n`;
-                context += `  Contraindicaciones: ${product.contraindications}\n`;
-                context += `  Precio: $${product.price}\n`;
-                context += `  Stock: ${product.stock}\n\n`;
+        // Add product information from retrieved documents
+        if (documents.length > 0) {
+            context += 'PRODUCTOS RELEVANTES ENCONTRADOS:\n\n';
+            documents.forEach((doc, index) => {
+                context += `${index + 1}. ${doc.pageContent}\n\n`;
             });
+        } else {
+            context += 'No se encontraron productos relevantes para esta consulta.\n';
         }
 
         return context;
