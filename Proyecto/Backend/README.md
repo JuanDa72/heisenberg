@@ -22,6 +22,9 @@ DB_USER=heisenberg_user
 DB_PASSWORD=heisenberg_pass_123
 DB_NAME=heisenberg_db
 DB_HOST=localhost
+
+# OpenAI Configuration
+OPENAI_API_KEY=your_openai_api_key_here
 ```
 
 ### 2. Iniciar Base de Datos con Docker

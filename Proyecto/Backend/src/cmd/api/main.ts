@@ -32,6 +32,7 @@ const handler = createHandler(service);
 app.use('/products', handler.productHandler.getRouter());
 app.use('/users', handler.userHandler.getRouter());
 app.use('/chatbot-sessions', handler.chatbotSessionHandler.getRouter());
+app.use('/chatbot-messages', handler.chatbotMessageHandler.getRouter());
 
 // Start server
 async function main():Promise<void>{

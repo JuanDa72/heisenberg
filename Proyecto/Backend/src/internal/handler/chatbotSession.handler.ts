@@ -16,16 +16,28 @@ function invalidFields(providedFields: string[], allowedFields: string[]): strin
 export interface chatbotSessionHandlerInterface {
     setUpRoutes(): void;
     getRouter(): Router;
+    setRAGService(ragService: any): void;
+    setChatbotMessageService(chatbotMessageService: any): void;
 }
 
 export class ChatbotSessionHandler implements chatbotSessionHandlerInterface {
 
     private chatbotSessionService: ChatbotSessionServiceInterface;
     private router: Router;
+    private ragService: any;
+    private chatbotMessageService: any;
 
     constructor(chatbotSessionService: ChatbotSessionServiceInterface) {
         this.chatbotSessionService = chatbotSessionService;
         this.router = Router();
+    }
+
+    setRAGService(ragService: any): void {
+        this.ragService = ragService;
+    }
+
+    setChatbotMessageService(chatbotMessageService: any): void {
+        this.chatbotMessageService = chatbotMessageService;
     }
 
     setUpRoutes(): void {
@@ -36,7 +48,7 @@ export class ChatbotSessionHandler implements chatbotSessionHandlerInterface {
         this.router.post('/', this.createChatbotSession.bind(this));
         this.router.put('/:id', this.updateChatbotSession.bind(this));
         this.router.delete('/:id', this.deleteChatbotSession.bind(this));
-
+        this.router.post('/:sessionId/chat', this.chat.bind(this));
     }
 
     private async createChatbotSession(req: Request, res: Response): Promise<void> {
@@ -413,6 +425,81 @@ export class ChatbotSessionHandler implements chatbotSessionHandlerInterface {
 
     }
 
+
+    private async chat(req: Request, res: Response): Promise<void> {
+        let response: ResponseDTO<{ message: string; botResponse: string }>;
+
+        try {
+            const sessionId = parseInt(req.params.sessionId);
+
+            if (isNaN(sessionId) || sessionId <= 0) {
+                response = {
+                    status: 400,
+                    message: 'Invalid session_id',
+                };
+                res.status(400).json(response);
+                return;
+            }
+
+            const { message } = req.body;
+
+            if (!message || typeof message !== 'string' || message.trim().length === 0) {
+                response = {
+                    status: 400,
+                    message: 'Message is required and must be a non-empty string',
+                };
+                res.status(400).json(response);
+                return;
+            }
+
+            // Verify session exists
+            const session = await this.chatbotSessionService.getChatbotSessionById(sessionId);
+            if (!session) {
+                response = {
+                    status: 404,
+                    message: 'ChatbotSession not found',
+                };
+                res.status(404).json(response);
+                return;
+            }
+
+            // Save user message
+            const userMessage = await this.chatbotMessageService.createChatbotMessage({
+                session_id: sessionId,
+                sender: 'user',
+                message: message.trim(),
+            });
+
+            // Generate bot response using RAG
+            const botResponseText = await this.ragService.generateResponse(sessionId, message.trim());
+
+            // Save bot response
+            const botMessage = await this.chatbotMessageService.createChatbotMessage({
+                session_id: sessionId,
+                sender: 'bot',
+                message: botResponseText,
+            });
+
+            response = {
+                status: 200,
+                message: 'Chat response generated successfully',
+                data: {
+                    message: userMessage.message,
+                    botResponse: botMessage.message,
+                },
+            };
+
+            res.status(200).json(response);
+        } catch (error) {
+            const message = (error instanceof Error) ? error.message : 'Unknown error';
+            console.error('Error in chat handler:', error);
+            response = {
+                status: 500,
+                message: `Error generating chat response: ${message}`,
+            };
+            res.status(500).json(response);
+        }
+    }
 
     public getRouter(): Router {
         return this.router;
