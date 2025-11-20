@@ -5,6 +5,11 @@ import {
   UpdateProductRequest,
   ApiResponse,
 } from '@/types/product.types';
+import { AxiosError } from 'axios';
+
+interface ApiErrorResponse {
+  message?: string;
+}
 
 /**
  * Servicio para gestión de productos
@@ -29,8 +34,9 @@ export const productService = {
       
       return response.data.data || [];
     } catch (error) {
-      if (error instanceof Error && (error as any).response?.data?.message) {
-        throw new Error((error as any).response.data.message);
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      if (axiosError.response?.data?.message) {
+        throw new Error(axiosError.response.data.message);
       }
       throw new Error('Error al obtener productos');
     }
@@ -53,8 +59,9 @@ export const productService = {
       
       throw new Error(response.data.message || 'Producto no encontrado');
     } catch (error) {
-      if (error instanceof Error && (error as any).response?.data?.message) {
-        throw new Error((error as any).response.data.message);
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      if (axiosError.response?.data?.message) {
+        throw new Error(axiosError.response.data.message);
       }
       throw new Error('Error al obtener producto');
     }
@@ -74,8 +81,9 @@ export const productService = {
       
       return response.data.data || [];
     } catch (error) {
-      if (error instanceof Error && (error as any).response?.data?.message) {
-        throw new Error((error as any).response.data.message);
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      if (axiosError.response?.data?.message) {
+        throw new Error(axiosError.response.data.message);
       }
       throw new Error('Error al buscar productos');
     }
@@ -99,8 +107,9 @@ export const productService = {
       
       throw new Error(response.data.message || 'Error al crear producto');
     } catch (error) {
-      if (error instanceof Error && (error as any).response?.data?.message) {
-        throw new Error((error as any).response.data.message);
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      if (axiosError.response?.data?.message) {
+        throw new Error(axiosError.response.data.message);
       }
       throw new Error('Error al crear producto');
     }
@@ -128,8 +137,9 @@ export const productService = {
       
       throw new Error(response.data.message || 'Error al actualizar producto');
     } catch (error) {
-      if (error instanceof Error && (error as any).response?.data?.message) {
-        throw new Error((error as any).response.data.message);
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      if (axiosError.response?.data?.message) {
+        throw new Error(axiosError.response.data.message);
       }
       throw new Error('Error al actualizar producto');
     }
@@ -145,8 +155,9 @@ export const productService = {
       await apiClient.delete<ApiResponse<never>>(`/products/${id}`);
       return true;
     } catch (error) {
-      if (error instanceof Error && (error as any).response?.data?.message) {
-        throw new Error((error as any).response.data.message);
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      if (axiosError.response?.data?.message) {
+        throw new Error(axiosError.response.data.message);
       }
       throw new Error('Error al eliminar producto');
     }

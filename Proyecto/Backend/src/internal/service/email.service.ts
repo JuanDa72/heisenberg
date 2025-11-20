@@ -1,7 +1,5 @@
 import * as nodemailer from 'nodemailer';
 import { config } from 'dotenv';
-import { error } from 'console';
-
 config();
 
 

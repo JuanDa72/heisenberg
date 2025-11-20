@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { AxiosError } from 'axios';
 import { authService } from './auth.service';
 import apiClient from './api.config';
 import { AxiosError } from 'axios';
@@ -141,5 +142,29 @@ describe('AuthService', () => {
         { params: { limit: undefined, offset: undefined } }
       );
     });
+  });
+
+  it('debe lanzar error cuando las credenciales son incorrectas', async () => {
+    // Simular respuesta del backend indicando credenciales inválidas
+    vi.mocked(apiClient.post).mockResolvedValueOnce({
+      data: {
+        status: 401,
+        message: 'Credenciales inválidas',
+        data: null,
+      },
+    });
+
+    await expect(
+      authService.login('noexiste@heisenberg.com', 'badpassword')
+    ).rejects.toThrow('Credenciales inválidas');
+  });
+
+  it('debe lanzar error cuando hay fallo de conexión al servidor', async () => {
+    // Simular un AxiosError sin response (p. ej. network error)
+    vi.mocked(apiClient.post).mockRejectedValueOnce(new AxiosError('Network Error'));
+
+    await expect(
+      authService.login('admin@heisenberg.com', 'password123')
+    ).rejects.toThrow('Error al conectar con el servidor');
   });
 });

@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import logoImage from "@/assets/heisenberg-logo.png";
 import { Send, Plus, Settings, User, HelpCircle, LogOut, Package } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import type { User as UserType } from "@/types/user.types";
 
 interface Message {
   id: string;
@@ -28,43 +28,44 @@ const Chat = () => {
     },
   ]);
   const [input, setInput] = useState("");
+  const [user, setUser] = useState<UserType | null>(null);
   const [userRole, setUserRole] = useState<"admin" | "user">("user");
   const [displayName, setDisplayName] = useState("Usuario");
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+  const checkAuth = useCallback(() => {
+    const savedUser = localStorage.getItem('user');
     
-    if (!session) {
+    if (!savedUser) {
+      toast({
+        title: "Sesión expirada",
+        description: "Por favor inicia sesión nuevamente.",
+        variant: "destructive",
+      });
       navigate("/");
       return;
     }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("display_name")
-      .eq("user_id", session.user.id)
-      .single();
-
-    if (profile) {
-      setDisplayName(profile.display_name);
+    try {
+      const userData: UserType = JSON.parse(savedUser);
+      setUser(userData);
+      setDisplayName(userData.username);
+      setUserRole(userData.role as "admin" | "user");
+    } catch (error) {
+      console.error('Error al parsear datos del usuario:', error);
+      navigate("/");
     }
+  }, [navigate, toast]);
 
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", session.user.id);
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
-    if (roles && roles.some(r => r.role === "admin")) {
-      setUserRole("admin");
-    }
-  };
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
+  const handleSignOut = () => {
+    localStorage.removeItem('user');
+    toast({
+      title: "Sesión cerrada",
+      description: "Has cerrado sesión exitosamente.",
+    });
     navigate("/");
   };
 
@@ -270,8 +271,8 @@ const Chat = () => {
                   className="pr-12 py-6 bg-input border-border/50 focus:border-primary rounded-2xl resize-none"
                 />
               </div>
-              <Button
-                onClick={handleSend}
+              <Button                onClick={handleSend}
+
                 disabled={!input.trim()}
                 className="h-12 w-12 rounded-full bg-accent hover:bg-accent/90 shadow-lg"
                 size="icon"

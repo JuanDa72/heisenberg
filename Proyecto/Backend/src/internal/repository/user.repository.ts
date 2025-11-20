@@ -1,6 +1,6 @@
 import User from "../domain/user.model";
-import UserDTO, { CreateUserDTO, UpdateUserDTO, ServiceUserDTO, VerificationTokenDTO, GoogleUserDTO } from "../dto/user.dto";
-import { Op, UniqueConstraintError, ValidationError } from "sequelize";
+import UserDTO, {UpdateUserDTO, ServiceUserDTO, VerificationTokenDTO, GoogleUserDTO } from "../dto/user.dto";
+import { FindOptions, Op, UniqueConstraintError, ValidationError} from "sequelize";
 
 export interface UserRepositoryInterface {
     findById(id: number): Promise<UserDTO|null>;
@@ -65,7 +65,7 @@ export class UserRepository{
 
         try {
 
-            const options: any = {
+            const options: FindOptions = {
                 order: [['created_at', 'DESC']]
             };
 
@@ -93,7 +93,6 @@ export class UserRepository{
             const plain = user.get({ plain: true });
             delete plain.hash_password;
             return plain as UserDTO;
-
         }
 
         catch (error){

@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import heisenbergLogo from "@/assets/heisenberg-logo.png";
 import { User, Lock } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { authService } from "@/services";
+import apiClient from "@/services/api.config";
+import type { CreateUserDTO } from "@/types/user.types";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -18,13 +20,11 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate("/chat");
-      }
-    };
-    checkUser();
+    // Verificar si hay un usuario guardado en localStorage
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      navigate("/chat");
+    }
   }, [navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -33,38 +33,43 @@ const Login = () => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        // Registro de nuevo usuario
+        const newUser: CreateUserDTO = {
+          username: displayName || email.split('@')[0],
           email,
           password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/`,
-            data: {
-              display_name: displayName || "Usuario",
-            },
-          },
-        });
+          role: 'user', // Rol por defecto
+        };
 
-        if (error) throw error;
+        await apiClient.post('/users/', newUser);
 
         toast({
           title: "Registro exitoso",
-          description: "Ahora puedes iniciar sesión con tu cuenta.",
+          description: "Revisa tu correo para verificar tu cuenta antes de iniciar sesión.",
         });
         setIsSignUp(false);
+        setEmail("");
+        setPassword("");
+        setDisplayName("");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
+        // Login
+        const user = await authService.login(email, password);
+        
+        // Guardar el usuario en localStorage
+        localStorage.setItem('user', JSON.stringify(user));
+        
+        toast({
+          title: "Inicio de sesión exitoso",
+          description: `Bienvenido ${user.username}!`,
         });
-
-        if (error) throw error;
-
+        
         navigate("/chat");
       }
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Ocurrió un error durante la autenticación.";
       toast({
         title: "Error",
-        description: error.message || "Ocurrió un error durante la autenticación.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
