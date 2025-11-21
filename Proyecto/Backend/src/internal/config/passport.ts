@@ -12,12 +12,13 @@ config();
 const userRepository = new UserRepository();
 const userService = new UserService(userRepository);
 
-//Configuración de la estrategia de Google OAuth2
-passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID || '',
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-    callbackURL: "http://localhost:3000/users/auth/google/callback",
-    scope: ['profile', 'email'],
+//Configuración de la estrategia de Google OAuth2 (solo si las credenciales están disponibles)
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    passport.use(new GoogleStrategy({
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: "http://localhost:3000/users/auth/google/callback",
+        scope: ['profile', 'email'],
     },
 
     async (accessToken, refreshToken, profile, done) => {
@@ -64,3 +65,4 @@ passport.use(new GoogleStrategy({
 
 
     }));
+}

@@ -44,11 +44,16 @@
     "typescript-eslint": "^8.46.4"
   },
   "dependencies": {
+    "@langchain/community": "^1.0.4",
+    "@langchain/core": "^1.0.6",
+    "@langchain/openai": "^1.1.2",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^5.1.0",
+    "faiss-node": "^0.5.1",
     "jsonwebtoken": "^9.0.2",
+    "langchain": "^1.0.6",
     "morgan": "^1.10.1",
     "mysql2": "^3.6.5",
     "nodemailer": "^7.0.10",
