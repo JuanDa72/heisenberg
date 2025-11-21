@@ -94,7 +94,7 @@ export class UserRepository{
             delete plain.hash_password;
             return plain as UserDTO;
         }
-
+    
         catch (error){
 
             if(error instanceof UniqueConstraintError){
@@ -108,7 +108,7 @@ export class UserRepository{
             console.error('Error create:', error);
             throw new Error('Error creating user in database');
 
-        }
+        }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
     }
 
     async createUserFromGoogle(googleUserData: GoogleUserDTO): Promise<UserDTO> {
