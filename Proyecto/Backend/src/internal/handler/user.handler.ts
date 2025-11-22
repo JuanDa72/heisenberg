@@ -592,16 +592,16 @@ export class UserHandler implements userHandlerInterface {
         
         passport.authenticate('google', { 
             session: false,
-            failureRedirect: 'http://localhost:4200/login/error'
+            failureRedirect: 'http://localhost:8080/login/error'
         }, 
         (err: Error | null, user: UserDTO, _info: unknown) => {
 
             if (err) {
-                return res.redirect(`http://localhost:4200/login/error?message=${encodeURIComponent(err.message)}`);
+                return res.redirect(`http://localhost:8080/login/error?message=${encodeURIComponent(err.message)}`);
             }
 
             if (!user) {
-                return res.redirect(`http://localhost:4200/login/error?message=Google%20login%20cancelled`);
+                return res.redirect(`http://localhost:8080/login/error?message=Google%20login%20cancelled`);
             }
 
             try {
@@ -609,7 +609,7 @@ export class UserHandler implements userHandlerInterface {
 
                 if (!jwtSecret) {
                     console.error('FATAL ERROR: JWT_SECRET is not defined in .env');
-                    return res.redirect(`http://localhost:4200/login/error?message=Server%20configuration%20error`);
+                    return res.redirect(`http://localhost:8080/login/error?message=Server%20configuration%20error`);
                 }
                 
                 // Creamos nuestro propio Token de Sesión (JWT)
@@ -619,11 +619,11 @@ export class UserHandler implements userHandlerInterface {
                     { expiresIn: '8h' } 
                 );
 
-                res.redirect(`http://localhost:4200/auth/callback?token=${token}`);
+                res.redirect(`http://localhost:8080/auth/callback?token=${token}`);
 
             } catch (jwtError) {
                 console.error("Error creating JWT:", jwtError);
-                res.redirect(`http://localhost:4200/login/error?message=Server%20error%20creating%20session`);
+                res.redirect(`http://localhost:8080/login/error?message=Server%20error%20creating%20session`);
             }
 
         })(req, res, next); // ¡Importante! Llama al middleware de Passport
