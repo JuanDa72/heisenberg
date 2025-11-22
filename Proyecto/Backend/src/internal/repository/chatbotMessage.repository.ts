@@ -1,11 +1,14 @@
 import ChatbotMessage from '../domain/chatbotMessage.model';
-import ChatbotMessageDTO, { CreateChatbotMessageDTO } from '../dto/chatbotMessage.dto';
-import { FindOptions, Op } from 'sequelize';
+import ChatbotMessageDTO, { CreateChatbotMessageDTO, UpdateChatbotMessageDTO } from '../dto/chatbotMessage.dto';
+import { FindOptions, Op} from 'sequelize';
 
 export interface ChatbotMessageRepositoryInterface {
     create(createChatbotMessageDTO: CreateChatbotMessageDTO): Promise<ChatbotMessageDTO>;
     findById(id: number): Promise<ChatbotMessageDTO | null>;
     findBySessionId(sessionId: number, limit?: number): Promise<ChatbotMessageDTO[]>;
+    update(id: number, updateData: UpdateChatbotMessageDTO): Promise<ChatbotMessageDTO | null>;
+    deleteFromDate(sessionId: number, date: Date): Promise<number>;
+    delete(id: number): Promise<boolean>;
 }
 
 export class ChatbotMessageRepository implements ChatbotMessageRepositoryInterface {
@@ -56,5 +59,73 @@ export class ChatbotMessageRepository implements ChatbotMessageRepositoryInterfa
             throw error;
         }
     }
+
+
+    async update(id: number, updateData: UpdateChatbotMessageDTO): Promise<ChatbotMessageDTO | null> {
+
+        try {
+            const currentChatbotMessage = await ChatbotMessage.findByPk(id);
+
+            if (!currentChatbotMessage) {
+                return null;
+            }
+
+            await currentChatbotMessage.update(updateData);
+
+            const plain = currentChatbotMessage.get({ plain: true });
+
+            return plain as ChatbotMessageDTO;
+
+        }
+
+        catch (error) {
+            console.error('Error updating ChatbotMessage:', error);
+            throw error;
+        }
+
+    }
+
+
+    async deleteFromDate(sessionId: number, date: Date): Promise<number> {
+
+        try {
+            const deleteCount = await ChatbotMessage.destroy({
+                where: {
+                    session_id: sessionId,
+                    created_at: {
+                        [Op.gt]: date
+                    }
+                }
+            });
+
+            return deleteCount;
+        }
+
+        catch (error) {
+            console.error('Error deleting ChatbotMessages from date:', error);
+            throw error;
+        }
+
+    }
+
+
+    async delete(id: number): Promise<boolean> {
+
+        try {
+            const deletedCount = await ChatbotMessage.destroy({
+                where: { id: id }
+            });
+
+            return deletedCount > 0;
+        }
+
+        catch (error) {
+            console.error('Error deleting ChatbotMessage:', error);
+            throw error;
+        }
+
+    }
+
+
 }
 

@@ -23,6 +23,8 @@ export const createHandler = (service: Service): Handler => {
     chatbotSessionHandler.setRAGService(service.ragService);
     chatbotSessionHandler.setChatbotMessageService(service.chatbotMessageService);
 
+    chatbotMessageHandler.setRAGService(service.ragService);
+
     // Setup routes
     productHandler.setupRoutes();
     userHandler.setUpRoutes();

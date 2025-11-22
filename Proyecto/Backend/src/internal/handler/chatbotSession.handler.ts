@@ -3,7 +3,7 @@ import { ChatbotSessionServiceInterface } from "../service/chatbotSession.servic
 import { ChatbotSessionDTO, CreateChatbotSessionDTO, UpdateChatbotSessionDTO } from "../dto/chatbotSession.dto";
 import ResponseDTO from "../dto/response.dto";
 
-const CHATBOTSESSIONS_UPDATE_FIELDS = ['is_active'];
+const CHATBOTSESSIONS_UPDATE_FIELDS = ['is_active', 'title'];
 
 
 function invalidFields(providedFields: string[], allowedFields: string[]): string[] {
@@ -479,6 +479,13 @@ export class ChatbotSessionHandler implements chatbotSessionHandlerInterface {
                 sender: 'bot',
                 message: botResponseText,
             });
+
+            if(!session.title || session.title.trim() === ''){
+                const newTitle = await this.ragService.generateTitle(message.trim());
+                this.chatbotSessionService.updateChatbotSession(sessionId, {title: newTitle
+            })
+            .catch((err: any) => console.error("Error generando título en background:", err));
+            }
 
             response = {
                 status: 200,

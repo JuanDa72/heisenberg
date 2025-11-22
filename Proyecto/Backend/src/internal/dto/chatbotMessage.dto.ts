@@ -13,3 +13,9 @@ export default interface ChatbotMessageDTO {
   created_at: Date;
 }
 
+export interface UpdateChatbotMessageDTO {
+  message?: string;
+}
+
+
+

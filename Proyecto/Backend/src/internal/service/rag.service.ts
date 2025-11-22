@@ -1,4 +1,5 @@
 import { ChatOpenAI } from '@langchain/openai';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - LangChain types issue
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { ProductRepositoryInterface } from '../repository/product.repository';
@@ -9,6 +10,7 @@ import * as path from 'path';
 
 export interface RAGServiceInterface {
     generateResponse(sessionId: number, userMessage: string): Promise<string>;
+    generateTitle(userMessage: string): Promise<string>;
 }
 
 export class RAGService implements RAGServiceInterface {
@@ -82,6 +84,34 @@ export class RAGService implements RAGServiceInterface {
             console.error('Error generating response:', error);
             throw error;
         }
+    }
+
+
+    public async generateTitle(userMessage: string): Promise<string> {
+
+        try {
+            const prompt = `Eres un experto resumiendo intenciones de búsqueda.
+            Genera un título MUY CORTO (máximo 5 palabras) que resuma el siguiente mensaje del usuario.
+            El título debe ser descriptivo pero conciso.
+            No uses comillas, ni puntos finales, ni prefijos como "Título:".
+            Ejemplo entrada: "Me duele la cabeza y tengo fiebre" -> "Dolor de cabeza y fiebre"`;
+
+            const response = await this.llm.invoke([
+                new SystemMessage(prompt),
+                new HumanMessage(userMessage)
+            ]);
+
+            let title= response.content.toString().trim();
+            title = title.replace(/(^"|"$)/g, '');
+
+            return title
+        }
+
+        catch (error) {
+            console.error('Error generating title:', error);
+            throw error;
+        }
+
     }
 
     private buildContextFromDocuments(documents: any[]): string {

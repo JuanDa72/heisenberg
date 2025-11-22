@@ -1,3 +1,4 @@
+import { title } from "process";
 import ChatbotSession  from "../domain/chatbotSession.model";
 import { ChatbotSessionDTO, CreateChatbotSessionDTO, UpdateChatbotSessionDTO } from "../dto/chatbotSession.dto";
 import { FindOptions } from "sequelize";
@@ -128,7 +129,8 @@ export class ChatbotSessionRepository implements ChatbotSessionRepositoryInterfa
             }
 
             await chatbotSession.update({
-                is_active: updateChatbotSessionDTO.is_active
+                is_active: updateChatbotSessionDTO.is_active,
+                title: updateChatbotSessionDTO.title
             });
 
             const plain = chatbotSession.get({plain:true});
