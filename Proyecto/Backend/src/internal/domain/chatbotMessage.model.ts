@@ -38,6 +38,6 @@ const ChatbotMessage = sequalize.define('ChatbotMessage', {
 ChatbotMessage.belongsTo(ChatbotSession, { foreignKey: 'session_id' });
 ChatbotSession.hasMany(ChatbotMessage, { foreignKey: 'session_id' });
 
-ChatbotMessage.sync();
+//ChatbotMessage.sync();
 
 export default ChatbotMessage;

@@ -1,0 +1,290 @@
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import logoImage from "@/assets/heisenberg-logo.png";
+import { Send, Plus, Settings, User, HelpCircle, LogOut, Package } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import type { User as UserType } from "@/types/user.types";
+
+interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+}
+
+const Chat = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "1",
+      role: "assistant",
+      content:
+        "Hola! Soy Heisenberg, tu asistente virtual de droguería. ¿En qué puedo ayudarte hoy?",
+      timestamp: new Date(),
+    },
+  ]);
+  const [input, setInput] = useState("");
+  const [user, setUser] = useState<UserType | null>(null);
+  const [userRole, setUserRole] = useState<"admin" | "user">("user");
+  const [displayName, setDisplayName] = useState("Usuario");
+
+  const checkAuth = useCallback(() => {
+    const savedUser = localStorage.getItem('user');
+    
+    if (!savedUser) {
+      toast({
+        title: "Sesión expirada",
+        description: "Por favor inicia sesión nuevamente.",
+        variant: "destructive",
+      });
+      navigate("/");
+      return;
+    }
+
+    try {
+      const userData: UserType = JSON.parse(savedUser);
+      setUser(userData);
+      setDisplayName(userData.username);
+      setUserRole(userData.role as "admin" | "user");
+    } catch (error) {
+      console.error('Error al parsear datos del usuario:', error);
+      navigate("/");
+    }
+  }, [navigate, toast]);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  const handleSignOut = () => {
+    localStorage.removeItem('user');
+    toast({
+      title: "Sesión cerrada",
+      description: "Has cerrado sesión exitosamente.",
+    });
+    navigate("/");
+  };
+
+  const handleProductsClick = () => {
+    if (userRole === "admin") {
+      navigate("/products");
+    } else {
+      toast({
+        title: "Acceso Denegado",
+        description: "Solo los administradores pueden acceder a esta sección.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSend = () => {
+    if (!input.trim()) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: input,
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+
+    // Mock response
+    setTimeout(() => {
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: `Has preguntado sobre: "${input}". Esta es una respuesta de ejemplo. En una implementación real, aquí se conectaría con un backend o API para obtener información del medicamento.`,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+    }, 500);
+
+    setInput("");
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  return (
+    <div className="flex h-screen bg-background">
+      {/* Sidebar */}
+      <div className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
+        {/* Header */}
+        <div className="p-4 border-b border-sidebar-border">
+          <div className="flex items-center gap-3">
+            <img 
+              src={logoImage} 
+              alt="Heisenberg Logo" 
+              className="w-10 h-10 object-contain"
+            />
+            <div>
+              <h2 className="font-bold text-sidebar-foreground">Heisenberg</h2>
+              <p className="text-xs text-sidebar-foreground/70">
+                Asistente de Farmacia
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* New Chat Button */}
+        <div className="p-4">
+          <Button
+            onClick={() => setMessages([])}
+            className="w-full justify-start gap-2 bg-sidebar-accent hover:bg-sidebar-accent/80"
+          >
+            <Plus className="h-4 w-4" />
+            Nuevo Chat
+          </Button>
+        </div>
+
+        {/* Navigation */}
+        <div className="flex-1 px-2">
+          <nav className="space-y-1">
+            <Button
+              onClick={handleProductsClick}
+              variant="ghost"
+              className="w-full justify-start gap-2 hover:bg-sidebar-accent"
+            >
+              <Package className="h-4 w-4" />
+              Productos {userRole !== "admin" && "(Admin)"}
+            </Button>
+            <Button
+              onClick={() => navigate("/profile")}
+              variant="ghost"
+              className="w-full justify-start gap-2 hover:bg-sidebar-accent"
+            >
+              <Settings className="h-4 w-4" />
+              Configuración
+            </Button>
+          </nav>
+        </div>
+
+        {/* Footer - User Info */}
+        <div className="p-4 border-t border-sidebar-border space-y-2">
+          <div className="px-3 py-2 rounded-lg bg-sidebar-accent/50">
+            <p className="text-xs text-sidebar-foreground/70 mb-1">Sesión activa</p>
+            <p className="text-sm font-medium text-sidebar-foreground">{displayName}</p>
+          </div>
+          <Button
+            onClick={handleSignOut}
+            variant="ghost"
+            className="w-full justify-start gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+          >
+            <LogOut className="h-4 w-4" />
+            Cerrar Sesión
+          </Button>
+        </div>
+      </div>
+
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Chat Header */}
+        <div className="h-16 border-b border-border px-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img 
+              src={logoImage} 
+              alt="Heisenberg Logo" 
+              className="w-8 h-8 object-contain"
+            />
+            <div>
+              <h3 className="font-semibold text-foreground">Chat con Heisenberg</h3>
+              <p className="text-xs text-muted-foreground">En línea</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full"
+              onClick={() => navigate("/profile")}
+            >
+              <User className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <HelpCircle className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Messages */}
+        <ScrollArea className="flex-1 p-6">
+          <div className="max-w-4xl mx-auto space-y-6">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex gap-4 ${
+                  message.role === "user" ? "flex-row-reverse" : ""
+                }`}
+              >
+                <div
+                  className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
+                    message.role === "assistant"
+                      ? "bg-primary/10"
+                      : "bg-accent/10"
+                  }`}
+                >
+                  {message.role === "assistant" ? (
+                    <img 
+                      src={logoImage} 
+                      alt="Heisenberg" 
+                      className="w-6 h-6 object-contain"
+                    />
+                  ) : (
+                    <User className="w-5 h-5 text-accent" />
+                  )}
+                </div>
+                <div
+                  className={`flex-1 max-w-2xl rounded-2xl p-4 ${
+                    message.role === "assistant"
+                      ? "bg-card shadow-card"
+                      : "bg-accent/20"
+                  }`}
+                >
+                  <p className="text-foreground leading-relaxed">
+                    {message.content}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+
+        {/* Input Area */}
+        <div className="border-t border-border p-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex gap-3 items-end">
+              <div className="flex-1 relative">
+                <Input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Escribir el nombre del medicamento..."
+                  className="pr-12 py-6 bg-input border-border/50 focus:border-primary rounded-2xl resize-none"
+                />
+              </div>
+              <Button                onClick={handleSend}
+
+                disabled={!input.trim()}
+                className="h-12 w-12 rounded-full bg-accent hover:bg-accent/90 shadow-lg"
+                size="icon"
+              >
+                <Send className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Chat;

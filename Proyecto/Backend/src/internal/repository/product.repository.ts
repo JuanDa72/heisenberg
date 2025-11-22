@@ -1,13 +1,15 @@
 import Product from '../domain/product.model';
 import ProductDTO from '../dto/product.dto';
-import { Op, UniqueConstraintError, ValidationError } from 'sequelize';
+import { Op, UniqueConstraintError, ValidationError, FindOptions, CreationAttributes} from 'sequelize';
 
 export interface ProductRepositoryInterface {
     findById(id: number): Promise<ProductDTO | null>;
-    findAll(limit?: number, offset?: number): Promise<ProductDTO[]>;    create(productData: Omit<ProductDTO, 'id' | 'created_at'>): Promise<ProductDTO>;
+    findAll(limit?: number, offset?: number): Promise<ProductDTO[]>;
+    create(productData: Omit<ProductDTO, 'id' | 'created_at'>): Promise<ProductDTO>;
     update(id: number, productData: Partial<Omit<ProductDTO, 'id' | 'created_at'>>): Promise<ProductDTO | null>;
     delete(id: number): Promise<boolean>;
     existsById(id: number): Promise<boolean>;
+    findByNameLike(name: string): Promise<ProductDTO[]>;
 }
 
 export class ProductRepository {
@@ -24,7 +26,7 @@ export class ProductRepository {
 
   async findAll(limit?: number, offset?: number): Promise<ProductDTO[]> {
     try {
-      const options: any = {
+      const options: FindOptions = {
         order: [['created_at', 'DESC']]
       };
       if (limit !== undefined) options.limit = limit;
@@ -38,21 +40,21 @@ export class ProductRepository {
     }
   }
 
-  async findByName(name: string): Promise<ProductDTO | null> {
+  async findByNameLike(name: string): Promise<ProductDTO[]> {
     try {
-      const product = await Product.findOne({
-        where: { name: { [Op.eq]: name } }
+      const products = await Product.findAll({
+        where: { name: { [Op.like]: `%${name}%` } }
       });
-      return product?.get({ plain: true }) as ProductDTO;
+      return products.map(p => p.get({ plain: true }) as ProductDTO);
     } catch (error) {
-      console.error('Error findByName:', error);
+      console.error('Error findByNameLike:', error);
       throw error;
     }
   }
 
   async create(productData: Omit<ProductDTO, 'id' | 'created_at'>): Promise<ProductDTO> {
     try {
-      const product = await Product.create(productData as any);
+      const product = await Product.create(productData as CreationAttributes< InstanceType<typeof Product>>);
       return product.get({ plain: true }) as ProductDTO;
     } catch (error) {
       if (error instanceof UniqueConstraintError) {
@@ -73,7 +75,7 @@ export class ProductRepository {
         return null;
       }
       
-      await product.update(productData as any);
+      await product.update(productData as Partial<InstanceType<typeof Product>>);
       return product.get({ plain: true }) as ProductDTO;
     } catch (error) {
       if (error instanceof UniqueConstraintError) {

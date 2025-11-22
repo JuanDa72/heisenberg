@@ -13,6 +13,7 @@
 # ──────────────────────────────
 node_modules/
 venv/
+dist/
 .env
 .env.*
 __pycache__/

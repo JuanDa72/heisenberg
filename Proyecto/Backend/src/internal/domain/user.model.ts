@@ -15,10 +15,21 @@ const UserModel = sequelize.define('User', {
   email: {
     type: DataTypes.STRING,
     allowNull: false,
+    unique: true,
   },
-  password_hash: {
+  hash_password: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
+  },
+  provider: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: 'local', // 'local' or 'google'
+  },
+  google_id: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    unique: true,
   },
   role: {
     type: DataTypes.STRING,
@@ -29,11 +40,24 @@ const UserModel = sequelize.define('User', {
     allowNull: false,
     defaultValue: DataTypes.NOW,
   },
+  is_verified: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
+  verification_token: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  token_expiry_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
 }, {
     tableName: 'user',
     timestamps: false,
 });
 
-UserModel.sync();
+//UserModel.sync();
 
 export default UserModel;
