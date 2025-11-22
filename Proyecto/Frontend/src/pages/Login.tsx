@@ -19,6 +19,11 @@ const Login = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const handleGoogleLogin = () => {
+    const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+    window.location.href = `${baseUrl}/users/auth/google`;
+  };
+
   useEffect(() => {
     // Verificar si hay un usuario guardado en localStorage
     const savedUser = localStorage.getItem('user');
@@ -156,6 +161,17 @@ const Login = () => {
             >
               {loading ? "Cargando..." : (isSignUp ? "Registrarse" : "Iniciar Sesión")}
             </Button>
+
+            {!isSignUp && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGoogleLogin}
+                className="w-full mt-2 font-semibold"
+              >
+                Iniciar sesión con Google
+              </Button>
+            )}
 
             <div className="text-center">
               <button
