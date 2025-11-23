@@ -16,6 +16,11 @@ const ChatbotSession = sequalize.define('ChatbotSession', {
       key: 'id',
     },
   },
+  title: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: null,
+  },
   is_active: {
     type: DataTypes.BOOLEAN,
     allowNull: false,

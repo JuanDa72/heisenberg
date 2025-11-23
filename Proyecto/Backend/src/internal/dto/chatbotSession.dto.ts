@@ -5,6 +5,7 @@ export interface ChatbotSessionDTO{
     user_id: number;
     is_active: boolean;
     created_at: Date;
+    title: string | null;
 }
 
 
@@ -14,5 +15,6 @@ export interface CreateChatbotSessionDTO{
 
 export interface UpdateChatbotSessionDTO{
     is_active?: boolean;
+    title?: string | null;
 }
 

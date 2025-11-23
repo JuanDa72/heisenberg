@@ -1,0 +1,743 @@
+{
+    "info": {
+        "_postman_id": "heisenberg-api-collection",
+        "name": "Heisenberg Backend API",
+        "description": "API completa para el sistema de gestión de productos farmacéuticos con chatbot integrado",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Products",
+            "item": [
+                {
+                    "name": "Get All Products",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/products?limit=10&offset=0",
+                            "host": ["{{base_url}}"],
+                            "path": ["products"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "10",
+                                    "description": "Número máximo de productos (1-100)"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0",
+                                    "description": "Número de productos a saltar"
+                                }
+                            ]
+                        },
+                        "description": "Obtiene todos los productos con paginación opcional"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Search Products by Name",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/products/search/?name=Paracetamol",
+                            "host": ["{{base_url}}"],
+                            "path": ["products", "search", ""],
+                            "query": [
+                                {
+                                    "key": "name",
+                                    "value": "Paracetamol",
+                                    "description": "Nombre del producto a buscar"
+                                }
+                            ]
+                        },
+                        "description": "Busca productos por nombre (búsqueda parcial)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Product by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/products/:id",
+                            "host": ["{{base_url}}"],
+                            "path": ["products", ":id"],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "ID del producto"
+                                }
+                            ]
+                        },
+                        "description": "Obtiene un producto específico por su ID"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Product",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Ibuprofeno 600mg\",\n    \"type\": \"Antiinflamatorio\",\n    \"use_case\": \"Para el alivio del dolor e inflamación\",\n    \"warnings\": \"Tomar con alimentos. No exceder la dosis recomendada.\",\n    \"contraindications\": \"Úlcera gástrica, insuficiencia hepática o renal grave\",\n    \"expiration_date\": \"2025-12-31\",\n    \"price\": 7.50,\n    \"stock\": 50\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/products",
+                            "host": ["{{base_url}}"],
+                            "path": ["products"]
+                        },
+                        "description": "Crea un nuevo producto farmacéutico"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Product",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Ibuprofeno 600mg\",\n    \"stock\": 45,\n    \"price\": 8.00\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/products/:id",
+                            "host": ["{{base_url}}"],
+                            "path": ["products", ":id"],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "ID del producto a actualizar"
+                                }
+                            ]
+                        },
+                        "description": "Actualiza un producto existente (campos opcionales)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Product",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/products/:id",
+                            "host": ["{{base_url}}"],
+                            "path": ["products", ":id"],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "ID del producto a eliminar"
+                                }
+                            ]
+                        },
+                        "description": "Elimina un producto por su ID"
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Endpoints para gestión de productos farmacéuticos"
+        },
+        {
+            "name": "Users",
+            "item": [
+                {
+                    "name": "Get All Users",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/users?limit=10&offset=0",
+                            "host": ["{{base_url}}"],
+                            "path": ["users"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "10",
+                                    "description": "Número máximo de usuarios (1-100)"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0",
+                                    "description": "Número de usuarios a saltar"
+                                }
+                            ]
+                        },
+                        "description": "Obtiene todos los usuarios con paginación opcional"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get User by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/users/:id",
+                            "host": ["{{base_url}}"],
+                            "path": ["users", ":id"],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "ID del usuario"
+                                }
+                            ]
+                        },
+                        "description": "Obtiene un usuario específico por su ID"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get User by Email",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/users/email/?email=user@example.com",
+                            "host": ["{{base_url}}"],
+                            "path": ["users", "email", ""],
+                            "query": [
+                                {
+                                    "key": "email",
+                                    "value": "user@example.com",
+                                    "description": "Email del usuario"
+                                }
+                            ]
+                        },
+                        "description": "Obtiene un usuario por su email"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create User",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"test_user\",\n    \"email\": \"test@heisenberg.com\",\n    \"password\": \"Test123!@#\",\n    \"role\": \"user\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/users",
+                            "host": ["{{base_url}}"],
+                            "path": ["users"]
+                        },
+                        "description": "Crea un nuevo usuario. El password debe tener al menos 8 caracteres, incluir mayúsculas, minúsculas, números y caracteres especiales."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"test@heisenberg.com\",\n    \"password\": \"Test123!@#\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/users/login",
+                            "host": ["{{base_url}}"],
+                            "path": ["users", "login"]
+                        },
+                        "description": "Inicia sesión con email y password"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update User",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"updated_username\",\n    \"email\": \"updated@heisenberg.com\",\n    \"role\": \"admin\",\n    \"is_verified\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/users/:id",
+                            "host": ["{{base_url}}"],
+                            "path": ["users", ":id"],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "ID del usuario a actualizar"
+                                }
+                            ]
+                        },
+                        "description": "Actualiza un usuario (campos permitidos: username, email, role, is_verified)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Password",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"current_password\": \"Test123!@#\",\n    \"new_password\": \"NewPass123!@#\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/users/:id/password",
+                            "host": ["{{base_url}}"],
+                            "path": ["users", ":id", "password"],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "ID del usuario"
+                                }
+                            ]
+                        },
+                        "description": "Actualiza la contraseña de un usuario"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete User",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/users/:id",
+                            "host": ["{{base_url}}"],
+                            "path": ["users", ":id"],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "ID del usuario a eliminar"
+                                }
+                            ]
+                        },
+                        "description": "Elimina un usuario por su ID"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Verify Email",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/users/verify-email/?token=verification_token_here",
+                            "host": ["{{base_url}}"],
+                            "path": ["users", "verify-email", ""],
+                            "query": [
+                                {
+                                    "key": "token",
+                                    "value": "verification_token_here",
+                                    "description": "Token de verificación enviado por email"
+                                }
+                            ]
+                        },
+                        "description": "Verifica el email de un usuario usando el token de verificación"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Resend Verification Email",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/users/resend-verification-email/?email=user@example.com",
+                            "host": ["{{base_url}}"],
+                            "path": ["users", "resend-verification-email", ""],
+                            "query": [
+                                {
+                                    "key": "email",
+                                    "value": "user@example.com",
+                                    "description": "Email del usuario"
+                                }
+                            ]
+                        },
+                        "description": "Reenvía el email de verificación"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Google OAuth - Initiate",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/users/auth/google",
+                            "host": ["{{base_url}}"],
+                            "path": ["users", "auth", "google"]
+                        },
+                        "description": "Inicia el flujo de autenticación con Google OAuth"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Google OAuth - Callback",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/users/auth/google/callback",
+                            "host": ["{{base_url}}"],
+                            "path": ["users", "auth", "google", "callback"]
+                        },
+                        "description": "Callback de Google OAuth (manejado automáticamente por Google)"
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Endpoints para gestión de usuarios y autenticación"
+        },
+        {
+            "name": "Chatbot Sessions",
+            "item": [
+                {
+                    "name": "Get All Chatbot Sessions",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/chatbot-sessions?limit=10&offset=0",
+                            "host": ["{{base_url}}"],
+                            "path": ["chatbot-sessions"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "10",
+                                    "description": "Número máximo de sesiones"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0",
+                                    "description": "Número de sesiones a saltar"
+                                }
+                            ]
+                        },
+                        "description": "Obtiene todas las sesiones de chatbot con paginación opcional"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Chatbot Session by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/chatbot-sessions/:id",
+                            "host": ["{{base_url}}"],
+                            "path": ["chatbot-sessions", ":id"],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "ID de la sesión"
+                                }
+                            ]
+                        },
+                        "description": "Obtiene una sesión de chatbot específica por su ID"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Active Sessions by User",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/chatbot-sessions/active/:user_id",
+                            "host": ["{{base_url}}"],
+                            "path": ["chatbot-sessions", "active", ":user_id"],
+                            "variable": [
+                                {
+                                    "key": "user_id",
+                                    "value": "1",
+                                    "description": "ID del usuario"
+                                }
+                            ]
+                        },
+                        "description": "Obtiene todas las sesiones activas de un usuario"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Sessions by User ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/chatbot-sessions/user/:user_id",
+                            "host": ["{{base_url}}"],
+                            "path": ["chatbot-sessions", "user", ":user_id"],
+                            "variable": [
+                                {
+                                    "key": "user_id",
+                                    "value": "1",
+                                    "description": "ID del usuario"
+                                }
+                            ]
+                        },
+                        "description": "Obtiene todas las sesiones de chatbot de un usuario"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Chatbot Session",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user_id\": 1\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/chatbot-sessions",
+                            "host": ["{{base_url}}"],
+                            "path": ["chatbot-sessions"]
+                        },
+                        "description": "Crea una nueva sesión de chatbot para un usuario"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Chat with Bot (RAG)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"message\": \"Tengo dolor de cabeza, ¿qué me recomiendas?\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/chatbot-sessions/:sessionId/chat",
+                            "host": ["{{base_url}}"],
+                            "path": ["chatbot-sessions", ":sessionId", "chat"],
+                            "variable": [
+                                {
+                                    "key": "sessionId",
+                                    "value": "1",
+                                    "description": "ID de la sesión de chatbot"
+                                }
+                            ]
+                        },
+                        "description": "Envía un mensaje al chatbot. El sistema RAG buscará productos relevantes y generará una respuesta contextual usando OpenAI GPT-4."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Chatbot Session",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"is_active\": false\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/chatbot-sessions/:id",
+                            "host": ["{{base_url}}"],
+                            "path": ["chatbot-sessions", ":id"],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "ID de la sesión a actualizar"
+                                }
+                            ]
+                        },
+                        "description": "Actualiza una sesión de chatbot (solo campo is_active)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Chatbot Session",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/chatbot-sessions/:id",
+                            "host": ["{{base_url}}"],
+                            "path": ["chatbot-sessions", ":id"],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "ID de la sesión a eliminar"
+                                }
+                            ]
+                        },
+                        "description": "Elimina una sesión de chatbot por su ID"
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Endpoints para gestión de sesiones de chatbot"
+        },
+        {
+            "name": "Chatbot Messages",
+            "item": [
+                {
+                    "name": "Get Message by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/chatbot-messages/:id",
+                            "host": ["{{base_url}}"],
+                            "path": ["chatbot-messages", ":id"],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "ID del mensaje"
+                                }
+                            ]
+                        },
+                        "description": "Obtiene un mensaje específico por su ID"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Messages by Session ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/chatbot-messages/session/:sessionId?limit=50",
+                            "host": ["{{base_url}}"],
+                            "path": ["chatbot-messages", "session", ":sessionId"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "50",
+                                    "description": "Número máximo de mensajes a obtener"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "sessionId",
+                                    "value": "1",
+                                    "description": "ID de la sesión"
+                                }
+                            ]
+                        },
+                        "description": "Obtiene todos los mensajes de una sesión de chatbot"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Chatbot Message",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"session_id\": 1,\n    \"sender\": \"user\",\n    \"message\": \"Hola, necesito ayuda\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/chatbot-messages",
+                            "host": ["{{base_url}}"],
+                            "path": ["chatbot-messages"]
+                        },
+                        "description": "Crea un nuevo mensaje en una sesión de chatbot. El sender puede ser 'user' o 'bot'."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Regenerate Message (Edit & RAG)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"message\": \"Corrección de mi mensaje anterior\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/chatbot-messages/:id/regenerate",
+                            "host": ["{{base_url}}"],
+                            "path": ["chatbot-messages", ":id", "regenerate"],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "ID del mensaje del usuario a editar"
+                                }
+                            ]
+                        },
+                        "description": "Edita un mensaje del usuario, elimina la historia futura y regenera la respuesta del bot."
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Endpoints para gestión de mensajes de chatbot"
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:3000",
+            "type": "string"
+        }
+    ]
+}
