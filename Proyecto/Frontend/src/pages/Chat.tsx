@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import logoImage from "@/assets/heisenberg-logo.png";
-import { Send, Plus, Settings, User, HelpCircle, LogOut, Package } from "lucide-react";
+import { Send, Plus, Settings, User, HelpCircle, LogOut, Package, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { chatbotService } from "@/services";
 import type { User as UserType } from "@/types/user.types";
+import type { ChatbotSession } from "@/types/chatbot.types";
 
 interface Message {
   id: string;
@@ -31,6 +33,9 @@ const Chat = () => {
   const [user, setUser] = useState<UserType | null>(null);
   const [userRole, setUserRole] = useState<"admin" | "user">("user");
   const [displayName, setDisplayName] = useState("Usuario");
+  const [currentSession, setCurrentSession] = useState<ChatbotSession | null>(null);
+  const [sending, setSending] = useState(false);
+  const [loadingSession, setLoadingSession] = useState(true);
 
   const checkAuth = useCallback(() => {
     const savedUser = localStorage.getItem('user');
@@ -50,15 +55,45 @@ const Chat = () => {
       setUser(userData);
       setDisplayName(userData.username);
       setUserRole(userData.role as "admin" | "user");
+      return userData;
     } catch (error) {
       console.error('Error al parsear datos del usuario:', error);
       navigate("/");
+      return null;
     }
   }, [navigate, toast]);
 
+  const initializeSession = useCallback(async (userData: UserType) => {
+    try {
+      setLoadingSession(true);
+      // Obtener sesión activa
+      const activeSessions = await chatbotService.getActiveSession(userData.id);
+      
+      if (activeSessions && activeSessions.length > 0) {
+        setCurrentSession(activeSessions[0]);
+      } else {
+        // Crear nueva sesión
+        const newSession = await chatbotService.createSession({ user_id: userData.id });
+        setCurrentSession(newSession);
+      }
+    } catch (error) {
+      console.error('Error al inicializar sesión:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo inicializar la sesión de chat",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingSession(false);
+    }
+  }, [toast]);
+
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    const userData = checkAuth();
+    if (userData) {
+      initializeSession(userData);
+    }
+  }, [checkAuth, initializeSession]);
 
   const handleSignOut = () => {
     localStorage.removeItem('user');
@@ -81,8 +116,34 @@ const Chat = () => {
     }
   };
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+  const handleNewChat = async () => {
+    if (!user) return;
+    
+    try {
+      setMessages([
+        {
+          id: "1",
+          role: "assistant",
+          content: "Hola! Soy Heisenberg, tu asistente virtual de droguería. ¿En qué puedo ayudarte hoy?",
+          timestamp: new Date(),
+        },
+      ]);
+      
+      // Crear nueva sesión
+      const newSession = await chatbotService.createSession({ user_id: user.id });
+      setCurrentSession(newSession);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al crear nueva sesión';
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSend = async () => {
+    if (!input.trim() || !currentSession || sending) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -92,19 +153,48 @@ const Chat = () => {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setSending(true);
 
-    // Mock response
-    setTimeout(() => {
+    try {
+      const response = await chatbotService.sendMessage(currentSession.id, input);
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: `Has preguntado sobre: "${input}". Esta es una respuesta de ejemplo. En una implementación real, aquí se conectaría con un backend o API para obtener información del medicamento.`,
+        content: response.botResponse,
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, assistantMessage]);
-    }, 500);
 
-    setInput("");
+      setMessages((prev) => [...prev, assistantMessage]);
+
+      // Actualizar el título de la sesión si es la primera vez
+      if (!currentSession.title) {
+        try {
+          const updatedSession = await chatbotService.updateSession(currentSession.id, {
+            title: input.substring(0, 50),
+          });
+          if (updatedSession) {
+            setCurrentSession(updatedSession);
+          }
+        } catch (err) {
+          console.error('Error al actualizar título:', err);
+        }
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al enviar mensaje';
+      
+      // Remover el último mensaje del usuario si hay error
+      setMessages((prev) => prev.slice(0, -1));
+      
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -113,6 +203,17 @@ const Chat = () => {
       handleSend();
     }
   };
+
+  if (loadingSession) {
+    return (
+      <div className="flex h-screen bg-background items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="text-foreground">Inicializando chat...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-background">
@@ -138,7 +239,7 @@ const Chat = () => {
         {/* New Chat Button */}
         <div className="p-4">
           <Button
-            onClick={() => setMessages([])}
+            onClick={handleNewChat}
             className="w-full justify-start gap-2 bg-sidebar-accent hover:bg-sidebar-accent/80"
           >
             <Plus className="h-4 w-4" />
@@ -197,7 +298,9 @@ const Chat = () => {
             />
             <div>
               <h3 className="font-semibold text-foreground">Chat con Heisenberg</h3>
-              <p className="text-xs text-muted-foreground">En línea</p>
+              <p className="text-xs text-muted-foreground">
+                {currentSession ? "En línea" : "Inicializando..."}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -255,6 +358,24 @@ const Chat = () => {
                 </div>
               </div>
             ))}
+            {sending && (
+              <div className="flex gap-4">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-primary/10">
+                  <img 
+                    src={logoImage} 
+                    alt="Heisenberg" 
+                    className="w-6 h-6 object-contain"
+                  />
+                </div>
+                <div className="flex-1 max-w-2xl rounded-2xl p-4 bg-card shadow-card">
+                  <div className="flex gap-2">
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </ScrollArea>
 
@@ -269,15 +390,20 @@ const Chat = () => {
                   onKeyPress={handleKeyPress}
                   placeholder="Escribir el nombre del medicamento..."
                   className="pr-12 py-6 bg-input border-border/50 focus:border-primary rounded-2xl resize-none"
+                  disabled={sending || !currentSession}
                 />
               </div>
-              <Button                onClick={handleSend}
-
-                disabled={!input.trim()}
+              <Button                
+                onClick={handleSend}
+                disabled={!input.trim() || sending || !currentSession}
                 className="h-12 w-12 rounded-full bg-accent hover:bg-accent/90 shadow-lg"
                 size="icon"
               >
-                <Send className="h-5 w-5" />
+                {sending ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Send className="h-5 w-5" />
+                )}
               </Button>
             </div>
           </div>

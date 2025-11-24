@@ -2,4 +2,5 @@
 export { authService } from './auth.service';
 export { productService } from './product.service';
 export { chatbotService } from './chatbot.service';
+export { chatbotMessagesService } from './chatbot-messages.service';
 export { default as apiClient } from './api.config';

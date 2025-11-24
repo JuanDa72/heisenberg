@@ -180,6 +180,33 @@ export const chatbotService = {
       throw new Error('Error al eliminar sesión');
     }
   },
+
+  /**
+   * Enviar mensaje al chatbot y obtener respuesta
+   * @param sessionId - ID de la sesión
+   * @param message - Mensaje del usuario
+   * @returns Mensaje del usuario y respuesta del bot
+   */
+  sendMessage: async (sessionId: number, message: string): Promise<{ message: string; botResponse: string }> => {
+    try {
+      const response = await apiClient.post<ApiResponse<{ message: string; botResponse: string }>>(
+        `/chatbot-sessions/${sessionId}/chat`,
+        { message }
+      );
+      
+      if (response.data.data) {
+        return response.data.data;
+      }
+      
+      throw new Error(response.data.message || 'Error al enviar mensaje');
+    } catch (error) {
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      if (axiosError.response?.data?.message) {
+        throw new Error(axiosError.response.data.message);
+      }
+      throw new Error('Error al enviar mensaje al chatbot');
+    }
+  },
 };
 
 export default chatbotService;

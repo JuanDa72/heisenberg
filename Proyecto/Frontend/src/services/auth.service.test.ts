@@ -145,14 +145,19 @@ describe('AuthService', () => {
   });
 
   it('debe lanzar error cuando las credenciales son incorrectas', async () => {
-    // Simular respuesta del backend indicando credenciales inválidas
-    vi.mocked(apiClient.post).mockResolvedValueOnce({
+    // Simular error 401 del backend indicando credenciales inválidas
+    const axiosError = new AxiosError('Bad Request');
+    axiosError.response = {
+      status: 401,
+      statusText: 'Unauthorized',
+      headers: {},
+      config: { headers: {} } as any,
       data: {
-        status: 401,
         message: 'Credenciales inválidas',
-        data: null,
       },
-    });
+    } as any;
+    
+    vi.mocked(apiClient.post).mockRejectedValueOnce(axiosError);
 
     await expect(
       authService.login('noexiste@heisenberg.com', 'badpassword')

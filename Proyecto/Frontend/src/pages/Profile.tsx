@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, User, Lock, Trash2 } from "lucide-react";
+import { ArrowLeft, User, Lock, Trash2, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,19 +19,19 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import type { User as UserType } from "@/types/user.types";
-import apiClient from "@/services/api.config";
+import { authService } from "@/services";
 
 const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [user, setUser] = useState<UserType | null>(null);
   const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [userRole, setUserRole] = useState<"admin" | "user">("user");
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
 
   const loadProfile = useCallback(() => {
     try {
@@ -44,7 +44,6 @@ const Profile = () => {
       const userData: UserType = JSON.parse(savedUser);
       setUser(userData);
       setUsername(userData.username);
-      setEmail(userData.email);
       setUserRole(userData.role as "admin" | "user");
     } catch (error) {
       console.error("Error loading profile:", error);
@@ -61,12 +60,12 @@ const Profile = () => {
 
   const handleUpdateProfile = async () => {
     if (!user) return;
+    setUpdating(true);
     try {
-      await apiClient.put(`/users/${user.id}`, {
+      const updatedUser = await authService.updateUser(user.id, {
         username: username,
       });
 
-      const updatedUser = { ...user, username };
       setUser(updatedUser);
       localStorage.setItem('user', JSON.stringify(updatedUser));
 
@@ -77,6 +76,8 @@ const Profile = () => {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Error al actualizar perfil";
       toast({ title: "Error", description: errorMessage, variant: "destructive" });
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -101,8 +102,9 @@ const Profile = () => {
       return;
     }
 
+    setUpdating(true);
     try {
-      await apiClient.put(`/users/${user.id}/password`, {
+      await authService.updatePassword(user.id, {
         current_password: currentPassword,
         new_password: newPassword,
       });
@@ -118,13 +120,16 @@ const Profile = () => {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Error al actualizar contraseña";
       toast({ title: "Error", description: errorMessage, variant: "destructive" });
+    } finally {
+      setUpdating(false);
     }
   };
 
   const handleDeleteAccount = async () => {
     if (!user) return;
+    setUpdating(true);
     try {
-      await apiClient.delete(`/users/${user.id}`);
+      await authService.deleteUser(user.id);
       localStorage.removeItem("user");
 
       toast({
@@ -135,13 +140,17 @@ const Profile = () => {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Error al eliminar cuenta";
       toast({ title: "Error", description: errorMessage, variant: "destructive" });
+      setUpdating(false);
     }
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-navy via-royal to-deep-purple flex items-center justify-center">
-        <div className="text-white">Cargando...</div>
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="text-white">Cargando perfil...</div>
+        </div>
       </div>
     );
   }
@@ -171,7 +180,7 @@ const Profile = () => {
                   {userRole === "admin" ? "Administrador" : "Usuario"}
                 </Badge>
               </div>
-              <CardDescription className="text-gray-400">{email}</CardDescription>
+              <CardDescription className="text-gray-400">{user?.email}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -185,7 +194,12 @@ const Profile = () => {
                   className="bg-black/60 border-white/20 text-white mt-2"
                 />
               </div>
-              <Button onClick={handleUpdateProfile} className="w-full">
+              <Button 
+                onClick={handleUpdateProfile} 
+                className="w-full"
+                disabled={updating || username === user?.username}
+              >
+                {updating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Actualizar Nombre
               </Button>
             </CardContent>
@@ -239,8 +253,9 @@ const Profile = () => {
               <Button 
                 onClick={handleChangePassword} 
                 className="w-full"
-                disabled={!currentPassword || !newPassword || !confirmPassword}
+                disabled={!currentPassword || !newPassword || !confirmPassword || updating}
               >
+                {updating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Cambiar Contraseña
               </Button>
             </CardContent>
@@ -278,8 +293,10 @@ const Profile = () => {
                     </AlertDialogCancel>
                     <AlertDialogAction
                       onClick={handleDeleteAccount}
+                      disabled={updating}
                       className="bg-red-600 hover:bg-red-700"
                     >
+                      {updating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                       Eliminar Cuenta
                     </AlertDialogAction>
                   </AlertDialogFooter>

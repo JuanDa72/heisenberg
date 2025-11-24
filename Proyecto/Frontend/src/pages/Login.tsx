@@ -4,10 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import heisenbergLogo from "@/assets/heisenberg-logo.png";
-import { User, Lock } from "lucide-react";
+import { User, Lock, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { authService } from "@/services";
-import apiClient from "@/services/api.config";
 import type { CreateUserDTO } from "@/types/user.types";
 
 const Login = () => {
@@ -32,26 +31,61 @@ const Login = () => {
     }
   }, [navigate]);
 
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateEmail(email)) {
+      toast({
+        title: "Error",
+        description: "Por favor ingresa un email válido.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "Error",
+        description: "La contraseña debe tener al menos 6 caracteres.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
       if (isSignUp) {
         // Registro de nuevo usuario
+        if (!displayName.trim()) {
+          toast({
+            title: "Error",
+            description: "Por favor ingresa tu nombre de usuario.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
         const newUser: CreateUserDTO = {
-          username: displayName || email.split('@')[0],
+          username: displayName,
           email,
           password,
           role: 'user', // Rol por defecto
         };
 
-        await apiClient.post('/users/', newUser);
+        await authService.createUser(newUser);
 
         toast({
           title: "Registro exitoso",
-          description: "Revisa tu correo para verificar tu cuenta antes de iniciar sesión.",
+          description: "Por favor inicia sesión con tus credenciales.",
         });
+        
         setIsSignUp(false);
         setEmail("");
         setPassword("");
@@ -159,7 +193,14 @@ const Login = () => {
               disabled={loading}
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg hover:shadow-glow transition-all disabled:opacity-50"
             >
-              {loading ? "Cargando..." : (isSignUp ? "Registrarse" : "Iniciar Sesión")}
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Cargando...
+                </>
+              ) : (
+                isSignUp ? "Registrarse" : "Iniciar Sesión"
+              )}
             </Button>
 
             {!isSignUp && (
@@ -168,6 +209,7 @@ const Login = () => {
                 variant="outline"
                 onClick={handleGoogleLogin}
                 className="w-full mt-2 font-semibold"
+                disabled={loading}
               >
                 Iniciar sesión con Google
               </Button>
@@ -178,6 +220,7 @@ const Login = () => {
                 type="button"
                 onClick={() => setIsSignUp(!isSignUp)}
                 className="text-sm text-primary hover:text-primary/80 transition-colors"
+                disabled={loading}
               >
                 {isSignUp ? "¿Ya tienes cuenta? Inicia sesión" : "¿No tienes cuenta? Regístrate"}
               </button>
