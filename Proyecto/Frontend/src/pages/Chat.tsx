@@ -6,9 +6,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import logoImage from "@/assets/heisenberg-logo.png";
 import { Send, Plus, Settings, User, HelpCircle, LogOut, Package, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { chatbotService } from "@/services";
+import { chatbotService, chatbotMessagesService } from "@/services";
 import type { User as UserType } from "@/types/user.types";
-import type { ChatbotSession } from "@/types/chatbot.types";
+import type { ChatbotSession, ChatbotMessage } from "@/types/chatbot.types";
 
 interface Message {
   id: string;
@@ -20,15 +20,7 @@ interface Message {
 const Chat = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      role: "assistant",
-      content:
-        "Hola! Soy Heisenberg, tu asistente virtual de droguería. ¿En qué puedo ayudarte hoy?",
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatbotMessage[]>([]);
   const [input, setInput] = useState("");
   const [user, setUser] = useState<UserType | null>(null);
   const [userRole, setUserRole] = useState<"admin" | "user">("user");
@@ -36,6 +28,8 @@ const Chat = () => {
   const [currentSession, setCurrentSession] = useState<ChatbotSession | null>(null);
   const [sending, setSending] = useState(false);
   const [loadingSession, setLoadingSession] = useState(true);
+  const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
+  const [editingText, setEditingText] = useState("");
 
   const checkAuth = useCallback(() => {
     const savedUser = localStorage.getItem('user');
@@ -66,15 +60,22 @@ const Chat = () => {
   const initializeSession = useCallback(async (userData: UserType) => {
     try {
       setLoadingSession(true);
-      // Obtener sesión activa
       const activeSessions = await chatbotService.getActiveSession(userData.id);
-      
+
       if (activeSessions && activeSessions.length > 0) {
-        setCurrentSession(activeSessions[0]);
+        const session = activeSessions[0];
+        setCurrentSession(session);
+
+        try {
+          const sessionMessages = await chatbotMessagesService.getMessagesBySessionId(session.id);
+          setMessages(sessionMessages);
+        } catch {
+          setMessages([]);
+        }
       } else {
-        // Crear nueva sesión
         const newSession = await chatbotService.createSession({ user_id: userData.id });
         setCurrentSession(newSession);
+        setMessages([]);
       }
     } catch (error) {
       console.error('Error al inicializar sesión:', error);
@@ -118,20 +119,11 @@ const Chat = () => {
 
   const handleNewChat = async () => {
     if (!user) return;
-    
+
     try {
-      setMessages([
-        {
-          id: "1",
-          role: "assistant",
-          content: "Hola! Soy Heisenberg, tu asistente virtual de droguería. ¿En qué puedo ayudarte hoy?",
-          timestamp: new Date(),
-        },
-      ]);
-      
-      // Crear nueva sesión
       const newSession = await chatbotService.createSession({ user_id: user.id });
       setCurrentSession(newSession);
+      setMessages([]);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error al crear nueva sesión';
       toast({
@@ -145,34 +137,17 @@ const Chat = () => {
   const handleSend = async () => {
     if (!input.trim() || !currentSession || sending) return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: input,
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
+    const messageToSend = input;
     setInput("");
     setSending(true);
 
     try {
-      const response = await chatbotService.sendMessage(currentSession.id, input);
+      await chatbotService.sendMessage(currentSession.id, messageToSend);
 
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: response.botResponse,
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-
-      // Actualizar el título de la sesión si es la primera vez
       if (!currentSession.title) {
         try {
           const updatedSession = await chatbotService.updateSession(currentSession.id, {
-            title: input.substring(0, 50),
+            title: messageToSend.substring(0, 50),
           });
           if (updatedSession) {
             setCurrentSession(updatedSession);
@@ -181,12 +156,49 @@ const Chat = () => {
           console.error('Error al actualizar título:', err);
         }
       }
+
+      try {
+        const updatedMessages = await chatbotMessagesService.getMessagesBySessionId(currentSession.id);
+        setMessages(updatedMessages);
+      } catch (err) {
+        console.error('Error al recargar mensajes:', err);
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error al enviar mensaje';
-      
-      // Remover el último mensaje del usuario si hay error
-      setMessages((prev) => prev.slice(0, -1));
-      
+
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleStartEditing = (message: ChatbotMessage) => {
+    setEditingMessageId(message.id);
+    setEditingText(message.message);
+  };
+
+  const handleCancelEditing = () => {
+    setEditingMessageId(null);
+    setEditingText("");
+  };
+
+  const handleConfirmEditing = async () => {
+    if (!currentSession || editingMessageId === null || !editingText.trim()) return;
+
+    try {
+      setSending(true);
+      await chatbotMessagesService.editMessageAndRegenerate(editingMessageId, editingText.trim());
+
+      const updatedMessages = await chatbotMessagesService.getMessagesBySessionId(currentSession.id);
+      setMessages(updatedMessages);
+      setEditingMessageId(null);
+      setEditingText("");
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al editar mensaje';
       toast({
         title: "Error",
         description: errorMessage,
@@ -325,17 +337,17 @@ const Chat = () => {
               <div
                 key={message.id}
                 className={`flex gap-4 ${
-                  message.role === "user" ? "flex-row-reverse" : ""
+                  message.sender === "user" ? "flex-row-reverse" : ""
                 }`}
               >
                 <div
                   className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-                    message.role === "assistant"
+                    message.sender === "bot"
                       ? "bg-primary/10"
                       : "bg-accent/10"
                   }`}
                 >
-                  {message.role === "assistant" ? (
+                  {message.sender === "bot" ? (
                     <img 
                       src={logoImage} 
                       alt="Heisenberg" 
@@ -345,16 +357,57 @@ const Chat = () => {
                     <User className="w-5 h-5 text-accent" />
                   )}
                 </div>
-                <div
-                  className={`flex-1 max-w-2xl rounded-2xl p-4 ${
-                    message.role === "assistant"
-                      ? "bg-card shadow-card"
-                      : "bg-accent/20"
-                  }`}
-                >
-                  <p className="text-foreground leading-relaxed">
-                    {message.content}
-                  </p>
+                <div className="flex-1 max-w-2xl">
+                  <div
+                    className={`rounded-2xl p-4 ${
+                      message.sender === "bot"
+                        ? "bg-card shadow-card"
+                        : "bg-accent/20"
+                    }`}
+                  >
+                    {editingMessageId === message.id && message.sender === "user" ? (
+                      <div className="space-y-2">
+                        <Input
+                          value={editingText}
+                          onChange={(e) => setEditingText(e.target.value)}
+                          disabled={sending}
+                        />
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleCancelEditing}
+                            disabled={sending}
+                          >
+                            Cancelar
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={handleConfirmEditing}
+                            disabled={sending || !editingText.trim()}
+                          >
+                            Guardar y regenerar
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="text-foreground leading-relaxed flex-1">
+                          {message.message}
+                        </p>
+                        {message.sender === "user" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleStartEditing(message)}
+                            disabled={sending}
+                          >
+                            Editar
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
