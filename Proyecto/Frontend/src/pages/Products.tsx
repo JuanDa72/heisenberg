@@ -23,10 +23,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Plus, Trash2, Package, ArrowLeft, Search, Loader2 } from "lucide-react";
+import { Plus, Trash2, Package, ArrowLeft, Search, Loader2, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { productService } from "@/services";
-import { Product, CreateProductRequest } from "@/types/product.types";
+import { Product, CreateProductRequest, UpdateProductRequest } from "@/types/product.types";
 
 const Products = () => {
   const navigate = useNavigate();
@@ -36,6 +36,9 @@ const Products = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searching, setSearching] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editProduct, setEditProduct] = useState<UpdateProductRequest>({});
 
   const [newProduct, setNewProduct] = useState<CreateProductRequest>({
     name: "",
@@ -166,6 +169,59 @@ const Products = () => {
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error al eliminar producto';
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditClick = (product: Product) => {
+    setEditingProduct(product);
+    setEditProduct({
+      name: product.name,
+      type: product.type,
+      use_case: product.use_case,
+      warnings: product.warnings,
+      contraindications: product.contraindications,
+      expiration_date: product.expiration_date.split("T")[0],
+      price: product.price,
+      stock: product.stock,
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdateProduct = async () => {
+    if (!editingProduct) return;
+
+    if (
+      !editProduct.name ||
+      !editProduct.type ||
+      !editProduct.use_case ||
+      !editProduct.expiration_date ||
+      (editProduct.price !== undefined && editProduct.price <= 0) ||
+      (editProduct.stock !== undefined && editProduct.stock < 0)
+    ) {
+      toast({
+        title: "Error",
+        description: "Por favor completa todos los campos requeridos correctamente",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const updatedProduct = await productService.updateProduct(editingProduct.id, editProduct);
+      setProducts(products.map((p) => (p.id === updatedProduct.id ? updatedProduct : p)));
+      setEditDialogOpen(false);
+      setEditingProduct(null);
+      toast({
+        title: "Producto actualizado",
+        description: `${updatedProduct.name} ha sido actualizado exitosamente`,
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al actualizar producto';
       toast({
         title: "Error",
         description: errorMessage,
@@ -424,38 +480,48 @@ const Products = () => {
                 <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Package className="w-6 h-6 text-primary" />
                 </div>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent className="bg-card border-border">
-                    <AlertDialogHeader>
-                      <AlertDialogTitle className="text-foreground">
-                        ¿Eliminar producto?
-                      </AlertDialogTitle>
-                      <AlertDialogDescription className="text-muted-foreground">
-                        ¿Estás seguro de que deseas eliminar "{product.name}"? Esta acción no se puede deshacer.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel className="bg-card border-border">
-                        Cancelar
-                      </AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleDeleteProduct(product.id, product.name)}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="rounded-full"
+                    onClick={() => handleEditClick(product)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full"
                       >
-                        Eliminar
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="bg-card border-border">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="text-foreground">
+                          ¿Eliminar producto?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-muted-foreground">
+                          ¿Estás seguro de que deseas eliminar "{product.name}"? Esta acción no se puede deshacer.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel className="bg-card border-border">
+                          Cancelar
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDeleteProduct(product.id, product.name)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Eliminar
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
 
               <h3 className="text-xl font-bold text-foreground mb-2">
@@ -502,6 +568,144 @@ const Products = () => {
                 : "Agrega tu primer producto para comenzar"}
             </p>
           </div>
+        )}
+
+        {editingProduct && (
+          <Dialog
+            open={editDialogOpen}
+            onOpenChange={(open) => {
+              setEditDialogOpen(open);
+              if (!open) {
+                setEditingProduct(null);
+              }
+            }}
+          >
+            <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-foreground">Editar Producto</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-name">Nombre del Producto *</Label>
+                    <Input
+                      id="edit-name"
+                      value={editProduct.name ?? ""}
+                      onChange={(e) =>
+                        setEditProduct({ ...editProduct, name: e.target.value })
+                      }
+                      className="bg-input border-border/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-type">Tipo *</Label>
+                    <Input
+                      id="edit-type"
+                      value={editProduct.type ?? ""}
+                      onChange={(e) =>
+                        setEditProduct({ ...editProduct, type: e.target.value })
+                      }
+                      className="bg-input border-border/50"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-use_case">Caso de Uso *</Label>
+                  <Input
+                    id="edit-use_case"
+                    value={editProduct.use_case ?? ""}
+                    onChange={(e) =>
+                      setEditProduct({ ...editProduct, use_case: e.target.value })
+                    }
+                    className="bg-input border-border/50"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-warnings">Advertencias</Label>
+                  <Input
+                    id="edit-warnings"
+                    value={editProduct.warnings ?? ""}
+                    onChange={(e) =>
+                      setEditProduct({ ...editProduct, warnings: e.target.value })
+                    }
+                    className="bg-input border-border/50"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-contraindications">Contraindicaciones</Label>
+                  <Input
+                    id="edit-contraindications"
+                    value={editProduct.contraindications ?? ""}
+                    onChange={(e) =>
+                      setEditProduct({
+                        ...editProduct,
+                        contraindications: e.target.value,
+                      })
+                    }
+                    className="bg-input border-border/50"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-expiration_date">Fecha de Expiración *</Label>
+                    <Input
+                      id="edit-expiration_date"
+                      type="date"
+                      value={editProduct.expiration_date ?? ""}
+                      onChange={(e) =>
+                        setEditProduct({
+                          ...editProduct,
+                          expiration_date: e.target.value,
+                        })
+                      }
+                      className="bg-input border-border/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-price">Precio *</Label>
+                    <Input
+                      id="edit-price"
+                      type="number"
+                      value={editProduct.price ?? 0}
+                      onChange={(e) =>
+                        setEditProduct({
+                          ...editProduct,
+                          price: parseFloat(e.target.value) || 0,
+                        })
+                      }
+                      className="bg-input border-border/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-stock">Stock *</Label>
+                    <Input
+                      id="edit-stock"
+                      type="number"
+                      value={editProduct.stock ?? 0}
+                      onChange={(e) =>
+                        setEditProduct({
+                          ...editProduct,
+                          stock: parseInt(e.target.value) || 0,
+                        })
+                      }
+                      className="bg-input border-border/50"
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleUpdateProduct}
+                  className="w-full bg-primary hover:bg-primary/90"
+                >
+                  Guardar Cambios
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         )}
       </main>
     </div>
