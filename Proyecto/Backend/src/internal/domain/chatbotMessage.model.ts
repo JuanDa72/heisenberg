@@ -35,8 +35,14 @@ const ChatbotMessage = sequalize.define('ChatbotMessage', {
 });
 
 // Define associations
-ChatbotMessage.belongsTo(ChatbotSession, { foreignKey: 'session_id' });
-ChatbotSession.hasMany(ChatbotMessage, { foreignKey: 'session_id' });
+ChatbotMessage.belongsTo(ChatbotSession, { foreignKey: 'session_id',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE'
+ });
+ChatbotSession.hasMany(ChatbotMessage, { foreignKey: 'session_id',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE'
+ });
 
 //ChatbotMessage.sync();
 
