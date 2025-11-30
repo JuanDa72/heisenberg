@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { ChatbotMessageServiceInterface } from '../service/chatbotMessage.service';
 import ChatbotMessageDTO, { CreateChatbotMessageDTO, UpdateChatbotMessageDTO } from '../dto/chatbotMessage.dto';
 import ResponseDTO from '../dto/response.dto';
+import { RAGServiceInterface } from '../service/rag.service';
 
 const CHATBOTMESSAGE_UPDATE_FIELDS = ['message'];
 
@@ -15,7 +16,6 @@ function invalidFields(providedFields: string[], allowedFields: string[]): strin
 export interface ChatbotMessageHandlerInterface {
     setUpRoutes(): void;
     getRouter(): Router;
-    setRAGService(ragService: any): void;
 }
 
 export class ChatbotMessageHandler implements ChatbotMessageHandlerInterface {
@@ -24,13 +24,10 @@ export class ChatbotMessageHandler implements ChatbotMessageHandlerInterface {
     private router: Router;
     private ragService: any;
 
-    constructor(chatbotMessageService: ChatbotMessageServiceInterface) {
+    constructor(chatbotMessageService: ChatbotMessageServiceInterface, ragService: RAGServiceInterface) {
         this.chatbotMessageService = chatbotMessageService;
-        this.router = Router();
-    }
-
-    setRAGService(ragService: any): void {
         this.ragService = ragService;
+        this.router = Router();
     }
 
     setUpRoutes(): void {

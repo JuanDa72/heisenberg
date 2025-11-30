@@ -110,7 +110,12 @@ export class VectorStoreService implements VectorStoreServiceInterface {
             return existingVectorStore;
         }
         
-        // If not found, create new one from products
+        // If not found, check if we have products to create a new one
+        if (products.length === 0) {
+            throw new Error('Cannot create vector store: no products available and no existing vector store found');
+        }
+        
+        // Create new one from products
         console.log('Vector store not found, creating new one from products...');
         const newVectorStore = await this.syncProductsToVectorStore(products);
         

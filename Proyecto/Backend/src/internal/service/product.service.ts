@@ -1,5 +1,7 @@
 import { ProductRepositoryInterface } from '../repository/product.repository'
 import ProductDTO, { CreateProductDTO, UpdateProductDTO } from '../dto/product.dto';
+import { VectorStoreService } from './vectorstore.service';
+import * as path from 'path';
 
 export interface ProductServiceInterface {
   getProduct(id: number): Promise<ProductDTO>;
@@ -13,9 +15,13 @@ export interface ProductServiceInterface {
 export class ProductService implements ProductServiceInterface {
   
   private productRepository: ProductRepositoryInterface;
+  private vectorStoreService: VectorStoreService;
+  private vectorStorePath: string;
   
-  constructor(productRepository: ProductRepositoryInterface) {
+  constructor(productRepository: ProductRepositoryInterface, vectorStoreService?: VectorStoreService) {
     this.productRepository = productRepository;
+    this.vectorStoreService = vectorStoreService || new VectorStoreService();
+    this.vectorStorePath = path.join(process.cwd(), 'data', 'vectorstore', 'faiss.index');
   }
 
   async getProduct(id: number): Promise<ProductDTO> {
@@ -42,7 +48,14 @@ export class ProductService implements ProductServiceInterface {
 
   async createProduct(productData: CreateProductDTO): Promise<ProductDTO> {
     try {
-      return await this.productRepository.create(productData);
+      const newProduct = await this.productRepository.create(productData);
+      
+      // Update vector store asynchronously (does not block the response)
+      this.updateVectorStore().catch(err => 
+        console.error('Error updating vector store after creating product:', err)
+      );
+      
+      return newProduct;
     } catch (error) {
       console.error('Error createProduct:', error);
       throw error;
@@ -62,6 +75,11 @@ export class ProductService implements ProductServiceInterface {
         throw new Error(`Error updating product with ID ${id}`);
       }
 
+      // Update vector store asynchronously (does not block the response)
+      this.updateVectorStore().catch(err => 
+        console.error('Error updating vector store after updating product:', err)
+      );
+
       return updatedProduct;
     } catch (error) {
       console.error('Error updateProduct:', error);
@@ -77,7 +95,16 @@ export class ProductService implements ProductServiceInterface {
         throw new Error(`Product with ID ${id} not found`);
       }
 
-      return await this.productRepository.delete(id);
+      const deleted = await this.productRepository.delete(id);
+      
+      if (deleted) {
+        // Update vector store asynchronously (does not block the response)
+        this.updateVectorStore().catch(err => 
+          console.error('Error updating vector store after deleting product:', err)
+        );
+      }
+
+      return deleted;
     } catch (error) {
       console.error('Error deleteProduct:', error);
       throw error;
@@ -99,5 +126,26 @@ export class ProductService implements ProductServiceInterface {
     }
   }
 
+  /**
+   * Updates the FAISS vector store with all current products
+   * This method runs asynchronously and does not block HTTP operations
+   */
+  private async updateVectorStore(): Promise<void> {
+    try {
+      // Get all products
+      const allProducts = await this.productRepository.findAll();
+      
+      // Sync vector store with all products
+      const vectorStore = await this.vectorStoreService.syncProductsToVectorStore(allProducts);
+      
+      // Save vector store to disk
+      await this.vectorStoreService.saveVectorStore(vectorStore, this.vectorStorePath);
+      
+      console.log('FAISS vector store updated successfully');
+    } catch (error) {
+      // Log the error but don't fail the operation
+      console.error('Error updating FAISS vector store:', error);
+    }
+  }
   
 }

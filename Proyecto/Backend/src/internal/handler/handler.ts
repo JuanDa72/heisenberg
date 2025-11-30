@@ -16,14 +16,8 @@ export const createHandler = (service: Service): Handler => {
     // Initialize handlers
     const productHandler = new ProductHandler(service.productService);
     const userHandler = new UserHandler(service.userService);
-    const chatbotSessionHandler = new ChatbotSessionHandler(service.chatbotSessionService);
-    const chatbotMessageHandler = new ChatbotMessageHandler(service.chatbotMessageService);
-
-    // Setup RAG and message services for chatbot session handler
-    chatbotSessionHandler.setRAGService(service.ragService);
-    chatbotSessionHandler.setChatbotMessageService(service.chatbotMessageService);
-
-    chatbotMessageHandler.setRAGService(service.ragService);
+    const chatbotSessionHandler = new ChatbotSessionHandler(service.chatbotSessionService, service.chatbotMessageService, service.ragService);
+    const chatbotMessageHandler = new ChatbotMessageHandler(service.chatbotMessageService, service.ragService);
 
     // Setup routes
     productHandler.setupRoutes();

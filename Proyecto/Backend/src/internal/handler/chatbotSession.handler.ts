@@ -2,6 +2,8 @@ import {Router, Request, Response} from "express";
 import { ChatbotSessionServiceInterface } from "../service/chatbotSession.service";
 import { ChatbotSessionDTO, CreateChatbotSessionDTO, UpdateChatbotSessionDTO } from "../dto/chatbotSession.dto";
 import ResponseDTO from "../dto/response.dto";
+import { ChatbotMessageServiceInterface } from "../service/chatbotMessage.service";
+import { RAGServiceInterface } from "../service/rag.service";
 
 const CHATBOTSESSIONS_UPDATE_FIELDS = ['is_active', 'title'];
 
@@ -16,28 +18,20 @@ function invalidFields(providedFields: string[], allowedFields: string[]): strin
 export interface chatbotSessionHandlerInterface {
     setUpRoutes(): void;
     getRouter(): Router;
-    setRAGService(ragService: any): void;
-    setChatbotMessageService(chatbotMessageService: any): void;
 }
 
 export class ChatbotSessionHandler implements chatbotSessionHandlerInterface {
 
     private chatbotSessionService: ChatbotSessionServiceInterface;
+    private chatbotMessageService: ChatbotMessageServiceInterface;
+    private ragService: RAGServiceInterface;
     private router: Router;
-    private ragService: any;
-    private chatbotMessageService: any;
 
-    constructor(chatbotSessionService: ChatbotSessionServiceInterface) {
+    constructor(chatbotSessionService: ChatbotSessionServiceInterface, chatbotMessageService: ChatbotMessageServiceInterface, ragService: RAGServiceInterface) {
         this.chatbotSessionService = chatbotSessionService;
-        this.router = Router();
-    }
-
-    setRAGService(ragService: any): void {
-        this.ragService = ragService;
-    }
-
-    setChatbotMessageService(chatbotMessageService: any): void {
         this.chatbotMessageService = chatbotMessageService;
+        this.ragService = ragService;
+        this.router = Router();
     }
 
     setUpRoutes(): void {
