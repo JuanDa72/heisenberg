@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "start": "concurrently \"npm start --prefix Proyecto/Backend\" \"npm run preview --prefix Proyecto/Frontend\""
+    "start": "concurrently \"npm start --prefix Proyecto/Backend\" \"npm run dev --prefix Proyecto/Frontend\""
   },
   "devDependencies": {
     "concurrently": "^9.2.1"
