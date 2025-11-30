@@ -51,6 +51,14 @@ const Products = () => {
     stock: 0,
   });
 
+  const getTodayDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   const checkAuth = useCallback(() => {
     const savedUser = localStorage.getItem('user');
     if (!savedUser) {
@@ -131,6 +139,17 @@ const Products = () => {
       return;
     }
 
+    const today = new Date(getTodayDate());
+    const expiration = new Date(newProduct.expiration_date);
+    if (expiration < today) {
+      toast({
+        title: "Error",
+        description: "La fecha de expiración no puede ser anterior a hoy",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const createdProduct = await productService.createProduct(newProduct);
       setProducts([...products, createdProduct]);
@@ -206,6 +225,17 @@ const Products = () => {
       toast({
         title: "Error",
         description: "Por favor completa todos los campos requeridos correctamente",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const today = new Date(getTodayDate());
+    const expiration = new Date(editProduct.expiration_date!);
+    if (expiration < today) {
+      toast({
+        title: "Error",
+        description: "La fecha de expiración no puede ser anterior a hoy",
         variant: "destructive",
       });
       return;
@@ -414,6 +444,7 @@ const Products = () => {
                         id="expiration_date"
                         type="date"
                         value={newProduct.expiration_date}
+                        min={getTodayDate()}
                         onChange={(e) =>
                           setNewProduct({
                             ...newProduct,
@@ -428,13 +459,17 @@ const Products = () => {
                       <Input
                         id="price"
                         type="number"
-                        value={newProduct.price}
-                        onChange={(e) =>
+                        min={0}
+                        value={newProduct.price === 0 ? "" : newProduct.price}
+                        onChange={(e) => {
+                          const rawValue = e.target.value;
+                          const parsed = parseFloat(rawValue);
+                          const safeValue = isNaN(parsed) || parsed < 0 ? 0 : parsed;
                           setNewProduct({
                             ...newProduct,
-                            price: parseFloat(e.target.value) || 0,
-                          })
-                        }
+                            price: safeValue,
+                          });
+                        }}
                         placeholder="5000"
                         className="bg-input border-border/50"
                       />
@@ -444,13 +479,17 @@ const Products = () => {
                       <Input
                         id="stock"
                         type="number"
-                        value={newProduct.stock}
-                        onChange={(e) =>
+                        min={0}
+                        value={newProduct.stock === 0 ? "" : newProduct.stock}
+                        onChange={(e) => {
+                          const rawValue = e.target.value;
+                          const parsed = parseInt(rawValue, 10);
+                          const safeValue = isNaN(parsed) || parsed < 0 ? 0 : parsed;
                           setNewProduct({
                             ...newProduct,
-                            stock: parseInt(e.target.value) || 0,
-                          })
-                        }
+                            stock: safeValue,
+                          });
+                        }}
                         placeholder="100"
                         className="bg-input border-border/50"
                       />
@@ -656,6 +695,7 @@ const Products = () => {
                       id="edit-expiration_date"
                       type="date"
                       value={editProduct.expiration_date ?? ""}
+                      min={getTodayDate()}
                       onChange={(e) =>
                         setEditProduct({
                           ...editProduct,
@@ -670,13 +710,29 @@ const Products = () => {
                     <Input
                       id="edit-price"
                       type="number"
-                      value={editProduct.price ?? 0}
-                      onChange={(e) =>
+                      min={0}
+                      value={editProduct.price ?? ""}
+                      onChange={(e) => {
+                        const rawValue = e.target.value;
+
+                        if (rawValue === "") {
+                          setEditProduct({
+                            ...editProduct,
+                            price: undefined,
+                          });
+                          return;
+                        }
+
+                        const parsed = parseFloat(rawValue);
+                        if (isNaN(parsed) || parsed < 0) {
+                          return;
+                        }
+
                         setEditProduct({
                           ...editProduct,
-                          price: parseFloat(e.target.value) || 0,
-                        })
-                      }
+                          price: parsed,
+                        });
+                      }}
                       className="bg-input border-border/50"
                     />
                   </div>
@@ -685,13 +741,29 @@ const Products = () => {
                     <Input
                       id="edit-stock"
                       type="number"
-                      value={editProduct.stock ?? 0}
-                      onChange={(e) =>
+                      min={0}
+                      value={editProduct.stock ?? ""}
+                      onChange={(e) => {
+                        const rawValue = e.target.value;
+
+                        if (rawValue === "") {
+                          setEditProduct({
+                            ...editProduct,
+                            stock: undefined,
+                          });
+                          return;
+                        }
+
+                        const parsed = parseInt(rawValue, 10);
+                        if (isNaN(parsed) || parsed < 0) {
+                          return;
+                        }
+
                         setEditProduct({
                           ...editProduct,
-                          stock: parseInt(e.target.value) || 0,
-                        })
-                      }
+                          stock: parsed,
+                        });
+                      }}
                       className="bg-input border-border/50"
                     />
                   </div>
