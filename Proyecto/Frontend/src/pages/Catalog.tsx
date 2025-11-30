@@ -70,7 +70,18 @@ const Catalog = () => {
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    if (!dateString) return "";
+
+    const [datePart] = dateString.split("T");
+    const [yearStr, monthStr, dayStr] = datePart.split("-");
+    const year = Number(yearStr);
+    const month = Number(monthStr);
+    const day = Number(dayStr);
+
+    if (!year || !month || !day) return dateString;
+
+    const date = new Date(year, month - 1, day);
+
     return date.toLocaleDateString("es-ES", {
       year: "numeric",
       month: "long",
