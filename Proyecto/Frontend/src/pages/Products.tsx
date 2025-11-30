@@ -40,6 +40,14 @@ const Products = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editProduct, setEditProduct] = useState<UpdateProductRequest>({});
 
+  const sortByExpirationDate = (items: Product[]) => {
+    return [...items].sort((a, b) => {
+      if (!a.expiration_date) return 1;
+      if (!b.expiration_date) return -1;
+      return a.expiration_date.localeCompare(b.expiration_date);
+    });
+  };
+
   const [newProduct, setNewProduct] = useState<CreateProductRequest>({
     name: "",
     type: "",
@@ -75,7 +83,7 @@ const Products = () => {
     try {
       setLoading(true);
       const data = await productService.getAllProducts();
-      setProducts(data);
+      setProducts(sortByExpirationDate(data));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error al cargar productos';
       toast({
@@ -102,7 +110,7 @@ const Products = () => {
     try {
       setSearching(true);
       const results = await productService.searchProductsByName(searchTerm);
-      setProducts(results);
+      setProducts(sortByExpirationDate(results));
       
       if (results.length === 0) {
         toast({
@@ -152,7 +160,7 @@ const Products = () => {
 
     try {
       const createdProduct = await productService.createProduct(newProduct);
-      setProducts([...products, createdProduct]);
+      setProducts(sortByExpirationDate([...products, createdProduct]));
       setNewProduct({
         name: "",
         type: "",
@@ -243,7 +251,8 @@ const Products = () => {
 
     try {
       const updatedProduct = await productService.updateProduct(editingProduct.id, editProduct);
-      setProducts(products.map((p) => (p.id === updatedProduct.id ? updatedProduct : p)));
+      const updatedList = products.map((p) => (p.id === updatedProduct.id ? updatedProduct : p));
+      setProducts(sortByExpirationDate(updatedList));
       setEditDialogOpen(false);
       setEditingProduct(null);
       toast({

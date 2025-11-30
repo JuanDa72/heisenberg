@@ -17,11 +17,19 @@ const Catalog = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searching, setSearching] = useState(false);
 
+  const sortByExpirationDate = (items: Product[]) => {
+    return [...items].sort((a, b) => {
+      if (!a.expiration_date) return 1;
+      if (!b.expiration_date) return -1;
+      return a.expiration_date.localeCompare(b.expiration_date);
+    });
+  };
+
   const loadProducts = async () => {
     try {
       setLoading(true);
       const data = await productService.getAllProducts();
-      setProducts(data);
+      setProducts(sortByExpirationDate(data));
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Error al cargar productos";
@@ -48,7 +56,7 @@ const Catalog = () => {
     try {
       setSearching(true);
       const results = await productService.searchProductsByName(searchTerm);
-      setProducts(results);
+      setProducts(sortByExpirationDate(results));
 
       if (results.length === 0) {
         toast({
