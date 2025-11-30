@@ -216,6 +216,14 @@ const Chat = () => {
     }
   };
 
+  const formatMessage = (text: string) => {
+    const escaped = text
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+    return escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  };
+
   if (loadingSession) {
     return (
       <div className="flex h-screen bg-background items-center justify-center">
@@ -400,9 +408,10 @@ const Chat = () => {
                       </div>
                     ) : (
                       <div className="flex items-start justify-between gap-3">
-                        <p className="text-foreground leading-relaxed flex-1">
-                          {message.message}
-                        </p>
+                        <p
+                          className="text-foreground leading-relaxed flex-1"
+                          dangerouslySetInnerHTML={{ __html: formatMessage(message.message) }}
+                        />
                         {message.sender === "user" && (
                           <Button
                             variant="outline"
