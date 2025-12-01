@@ -17,11 +17,19 @@ const Catalog = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searching, setSearching] = useState(false);
 
+  const sortByExpirationDate = (items: Product[]) => {
+    return [...items].sort((a, b) => {
+      if (!a.expiration_date) return 1;
+      if (!b.expiration_date) return -1;
+      return a.expiration_date.localeCompare(b.expiration_date);
+    });
+  };
+
   const loadProducts = async () => {
     try {
       setLoading(true);
       const data = await productService.getAllProducts();
-      setProducts(data);
+      setProducts(sortByExpirationDate(data));
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Error al cargar productos";
@@ -48,7 +56,7 @@ const Catalog = () => {
     try {
       setSearching(true);
       const results = await productService.searchProductsByName(searchTerm);
-      setProducts(results);
+      setProducts(sortByExpirationDate(results));
 
       if (results.length === 0) {
         toast({
@@ -70,7 +78,18 @@ const Catalog = () => {
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    if (!dateString) return "";
+
+    const [datePart] = dateString.split("T");
+    const [yearStr, monthStr, dayStr] = datePart.split("-");
+    const year = Number(yearStr);
+    const month = Number(monthStr);
+    const day = Number(dayStr);
+
+    if (!year || !month || !day) return dateString;
+
+    const date = new Date(year, month - 1, day);
+
     return date.toLocaleDateString("es-ES", {
       year: "numeric",
       month: "long",
