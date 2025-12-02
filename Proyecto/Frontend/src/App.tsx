@@ -11,6 +11,7 @@ import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import AuthCallback from "./pages/AuthCallback";
 import Catalog from "./pages/Catalog";
+import Home from "./pages/Home";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Login />} />
+            <Route path="/home" element={<Home />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/products" element={<Products />} />

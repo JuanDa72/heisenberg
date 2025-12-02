@@ -158,14 +158,16 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-navy via-royal to-deep-purple p-6">
       <div className="max-w-2xl mx-auto">
-        <Button
-          variant="ghost"
-          className="mb-6 text-white hover:bg-white/10"
-          onClick={() => navigate("/chat")}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Volver al Chat
-        </Button>
+        <div className="flex items-center gap-3 mb-6">
+          <Button
+            variant="ghost"
+            className="text-white hover:bg-white/10"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Volver
+          </Button>
+        </div>
 
         <div className="space-y-6">
           {/* User Info Card */}

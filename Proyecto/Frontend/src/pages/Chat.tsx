@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import logoImage from "@/assets/heisenberg-logo.png";
-import { Send, Plus, Settings, User, HelpCircle, LogOut, Package, Loader2 } from "lucide-react";
+import { Send, Plus, Settings, User, HelpCircle, LogOut, Package, Loader2, Home as HomeIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { chatbotService, chatbotMessagesService } from "@/services";
 import type { User as UserType } from "@/types/user.types";
@@ -324,6 +324,14 @@ const Chat = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => navigate("/home")}
+            >
+              <HomeIcon className="h-4 w-4" />
+              Home
+            </Button>
             <Button
               variant="outline"
               className="gap-2"

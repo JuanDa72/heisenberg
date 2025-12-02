@@ -133,10 +133,10 @@ const Catalog = () => {
               variant="outline"
               size="sm"
               className="gap-2"
-              onClick={() => navigate("/")}
+              onClick={() => navigate(-1)}
             >
               <ArrowLeft className="h-4 w-4" />
-              Volver al inicio
+              Volver
             </Button>
           </div>
         </div>

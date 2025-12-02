@@ -27,7 +27,7 @@ const Login = () => {
     // Verificar si hay un usuario guardado en localStorage
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
-      navigate("/chat");
+      navigate("/home");
     }
   }, [navigate]);
 
@@ -102,7 +102,7 @@ const Login = () => {
           description: `Bienvenido ${user.username}!`,
         });
         
-        navigate("/chat");
+        navigate("/home");
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error durante la autenticación.";
