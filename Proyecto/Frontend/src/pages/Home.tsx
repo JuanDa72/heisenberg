@@ -59,7 +59,8 @@ const Home = () => {
   }, [toast]);
 
   return (
-    <div className="min-h-screen gradient-hero px-4 py-10 flex flex-col">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-900 via-slate-800 to-blue-700/60
+ flex flex-col">
       <div className="relative w-full max-w-6xl mx-auto flex-1 flex flex-col gap-12">
         <div className="absolute top-0 left-0">
           <div className="relative">
