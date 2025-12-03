@@ -59,7 +59,8 @@ const AuthCallback = () => {
           description: `Bienvenido ${user.username}!`,
         });
 
-        navigate("/chat", { replace: true });
+        const targetPath = user.role === "user" ? "/home" : "/chat";
+        navigate(targetPath, { replace: true });
       } catch (error) {
         console.error("Error en callback de Google:", error);
         const errorMessage = error instanceof Error ? error.message : "Error desconocido";
